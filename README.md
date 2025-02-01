@@ -48,7 +48,7 @@ Resulting Entra ID configuration:
 **NOTE**: You can find YubiKey AAGUIDs here: https://yubi.co/aaguids
 
 ### Create a custom authentication strength definition
-This Cmdlet (Set-YubiKeyAuthStrength) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either add all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys.
+This Cmdlet (Set-YubiKeyAuthStrength) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either add all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys. An optional user-selected name can be provided using the -Name parameter.
 
    
 **Add a custom authentication strength using _all_ FIDO2 passkey-capable YubiKey models:**
@@ -59,6 +59,11 @@ Set-YubiKeyAuthStrength -All
 ```powershell
 Set-YubiKeyAuthStrength -AAGUID "fa2b99dc-9e39-4257-8f92-4a30d23c4118"
 ```
+**Add a custom authentication strength with your name of choice**
+```powershell
+Set-YubiKeyAuthStrength -All -Name "AAL3"
+```
+
 Resulting Entra ID configuration:   
 
 ![](/images/Set-YubiKeyAuthStrength.png)
