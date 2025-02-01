@@ -1,11 +1,11 @@
 ## Installing and Using entraYK
 
 ### Installation Instructions:
-1. Extract the ZIP  
+1. Extract the ZIP (likely done if you are reading this)
    - Unzip the folder to a directory of your choice, e.g., `C:\Modules\entraYK`.  
 
 2. Open PowerShell  
-   - If using PowerShell 7, start it by running:  
+   - Start PowerShell 7 by running:  
      pwsh
 
 3. Import the Module  
@@ -21,7 +21,7 @@
 
 5. Run a Cmdlet  
    - Execute your desired cmdlet, e.g.:  
-     Get-EntraUser -UserPrincipalName user@domain.com
+     Get-YubiKeys -User user@domain.com
 
 ### Tips & Notes:
 - If you encounter an "untrusted module" warning, you may need to unblock the file:  
