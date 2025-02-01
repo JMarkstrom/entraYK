@@ -15,6 +15,9 @@ Specify one or more AAGUIDs to include in the authentication strength.
 .PARAMETER All
 Use all supported YubiKey AAGUIDs
 
+.PARAMETER Name
+Name of the authentication strength policy
+
 .EXAMPLE
 Set-YubiKeyAuthStrength -All
 Adds a custom authentication strength using all FIDO2 passkey-capable YubiKey models
@@ -27,10 +30,15 @@ Adds a custom authentication strength using only select YubiKey model(s) by thei
 Set-YubiKeyAuthStrength -AAGUID "fa2b99dc-9e39-4257-8f92-4a30d23c4118", "2fc0579f-8113-47ea-b116-bb5a8db9202a"
 Adds a custom authentication strength using select YubiKey model(s) by their AAGUID(s).
 
+.EXAMPLE
+Set-YubiKeyAuthStrength -AAGUID "a25342c0-3cdc-4414-8e46-f4807fca511c" -Name "YubiKey 5.7"
+Adds a custom authentication strength using select YubiKey model(s) by their AAGUID(s) with a custom policy name.
+
 .NOTES
 - Ensure that you are connected to the Microsoft Graph API with the appropriate permissions
 - Confirm that your YubiKey(s) matches the AAGUID(s) being configured. Misconfiguration may result in account lockouts.
 - To ensure account recovery, the authentication strength also includes Temporary Access Pass (TAP) support.
+
 
 .LINK
 https://github.com/JMarkstrom/entraYK
@@ -57,7 +65,12 @@ function Set-YubiKeyAuthStrength {
                   ParameterSetName = "AllAAGUIDs",
                   HelpMessage = "Use all supported YubiKey AAGUIDs")]
         [switch]
-        $All
+        $All,
+
+        [Parameter(Mandatory = $false,
+                  HelpMessage = "Name of the authentication strength policy")]
+        [string]
+        $Name = "YubiKey"
     )
 
     # Define required scopes
@@ -105,7 +118,7 @@ function Set-YubiKeyAuthStrength {
 
         if ($needsBrowserAuth) {
             try {
-                Connect-MgGraph -Scopes $requiredScopes -NoWelcome -UseDeviceAuthentication
+                Connect-MgGraph -Scopes $requiredScopes -NoWelcome #-UseDeviceAuthentication
                 
                 # Verify final connection status
                 $context = Get-MgContext
@@ -183,7 +196,7 @@ function Set-YubiKeyAuthStrength {
     # Run the call
     $Uri = "https://graph.microsoft.com/v1.0/policies/authenticationStrengthPolicies"
     $Body = @{
-        "displayName"           = "YubiKey"
+        "displayName"           = $Name
         "description"          = "YubiKey as a device-bound passkey"
         "requirementsSatisfied" = "mfa"
         "allowedCombinations"   = @("fido2", "temporaryAccessPassOneTime")
