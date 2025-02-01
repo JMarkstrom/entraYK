@@ -296,10 +296,10 @@ function Register-YubiKey {
 
     # Disconnect from Microsoft Graph
     try {
-        Write-Host "Disconnecting from Microsoft Graph..."
-        Disconnect-MgGraph
+        Write-Debug "Disconnecting from Microsoft Graph..."
+        Disconnect-MgGraph | Out-Null  # Suppress output
         Write-Debug "Disconnected from Microsoft Graph"
     } catch {
-        Write-Debug "Failed to disconnect from Microsoft Graph: $_"
+        Write-Warning "Failed to disconnect from Microsoft Graph: $_"
     }
 }

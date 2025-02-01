@@ -208,8 +208,8 @@ function Set-YubiKeyAuthStrength {
     }
     # Disconnect from Microsoft Graph
     try {
-        Write-Host "Disconnecting from Microsoft Graph..."
-        Disconnect-MgGraph
+        Write-Debug "Disconnecting from Microsoft Graph..."
+        Disconnect-MgGraph | Out-Null  # Suppress output
         Write-Debug "Disconnected from Microsoft Graph"
     } catch {
         Write-Warning "Failed to disconnect from Microsoft Graph: $_"
