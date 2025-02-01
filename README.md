@@ -48,7 +48,7 @@ Resulting Entra ID configuration:
 **NOTE**: You can find YubiKey AAGUIDs here: https://yubi.co/aaguids
 
 ### Create a custom authentication strength definition
-This Cmdlet (Set-YubiKeyAuthStrength) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys.
+This Cmdlet (Set-YubiKeyAuthStrength) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either add all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys.
 
    
 **Add a custom authentication strength using _all_ FIDO2 passkey-capable YubiKey models:**
@@ -66,7 +66,7 @@ Resulting Entra ID configuration:
 **NOTE**: You can find YubiKey AAGUIDs here: https://yubi.co/aaguids
 
 ### Register a YubiKey as device-bound passkey on behalf of a user
-This Cmdlet (Register-YubiKey) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK* for YubiKey configuration and credential creation. It will generate a random PIN, name the YubiKey to contain Serial Number for assett tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC.
+This Cmdlet (Register-YubiKey) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN, name the YubiKey to contain Serial Number for assett tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC.
 
 
 **Register a YubiKey on behalf of a user:**
@@ -112,6 +112,7 @@ Because AAGUIDs does not necessarily change with firmware version it is possible
 ## 📖 Roadmap
 Possible improvements includes:
 - ~~Passkey "EOBO" enrollment using [powershellYK](https://github.com/virot/powershellYK)~~
+- Add "-Name" param for Set-YubiKeyAuthStrength
 - Ability to fetch last used authenticator by UPN
 - Configuration by Certification level (e.g.: "L2 only YubiKeys")
 - Configuration by Firmware version (e.g: "all 5.7+ YubiKeys)
