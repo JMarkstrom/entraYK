@@ -10,7 +10,7 @@ Functionality includes the ability to:
 - List YubiKey attributes for all _or_ select user(s)<sup>2</sup>
 
 <sup>1</sup>This Cmdlet is making use of Oscar Virot's [powershellYK](https://github.com/virot/powershellYK/) module.   
-<sup>2</sup>Output includes YubiKey nickname, **firmware version** and Fido **certification level**.
+<sup>2</sup>Output includes YubiKey **nickname**, **firmware version** and Fido **certification level**.
 
 ## ⚠️ Disclaimer
 The PowerShell module provided herein is made available on an "as-is" basis, without any warranties or representations, whether express, implied, or statutory, including but not limited to implied warranties of merchantability, fitness for a particular purpose, or non-infringement.
