@@ -89,7 +89,7 @@ PIN           : 5144
 ![](/images/Register-YubiKey.png)
 
 ### List YubiKey attributes for all or select user(s)
-This Cmdlet (Get-YubiKeys) lists properties about enrolled YubiKeys in Microsoft Entra ID. It can perform this listing either for all accessible users or for select user(s) by User Principal Name (UPN). Information presented included firmware version, nickname as well as Fido certification level.
+This Cmdlet (Get-YubiKeys) lists properties about enrolled YubiKeys in Microsoft Entra ID. It can perform this listing either for all accessible users or for select user(s) by User Principal Name (UPN). Information presented includes firmware version, nickname as well as Fido certification level.
    
 
 **Get YubiKey information for all users you have access to in the tenant:**
@@ -107,7 +107,7 @@ Sample output:
 ```bash
 UPN                Nickname        Firmware      Certfication
 -------------------------------------------------------------
-alicel@swjm.blog   YubiKey 5 Nano  5.7           L2
+alice@swjm.blog   YubiKey 5 Nano  5.7           L2
 bob@swjm.blog      YubiKey 5 NFC   5.7           L2
 mike@swjm.blog     YubiKey 5C NFC  5.2 / 5.4     L1
 ```
