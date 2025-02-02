@@ -107,7 +107,7 @@ Sample output:
 ```bash
 UPN                Nickname        Firmware      Certfication
 -------------------------------------------------------------
-alice@swjm.blog   YubiKey 5 Nano  5.7           L2
+alice@swjm.blog    YubiKey 5 Nano  5.7           L2
 bob@swjm.blog      YubiKey 5 NFC   5.7           L2
 mike@swjm.blog     YubiKey 5C NFC  5.2 / 5.4     L1
 ```
