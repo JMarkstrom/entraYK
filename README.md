@@ -111,7 +111,7 @@ alice@swjm.blog    YubiKey 5 Nano  5.7           L2
 bob@swjm.blog      YubiKey 5 NFC   5.7           L2
 mike@swjm.blog     YubiKey 5C NFC  5.2 / 5.4     L1
 ```
-**NOTE**: The logic to present firmware version is dependant on Entra ID storing YubiKey AAGUID.
+**NOTE**: The logic to present firmware version is dependent on Entra ID storing YubiKey AAGUID.
 Because AAGUIDs does not necessarily change with firmware version it is possible that a YubiKey is _either_ one firmware or another as shown above (```5.2 / 5.4```).
 
 ## 📖 Roadmap
