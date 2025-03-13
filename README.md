@@ -88,9 +88,12 @@ PIN           : 5144
 ```
 ![](/images/Register-YubiKey.png)
 
+### Create a Kerberos object
+WIP.
+
 ### List YubiKey attributes for all or select user(s)
 This Cmdlet (Get-YubiKeys) lists properties about enrolled YubiKeys in Microsoft Entra ID. It can perform this listing either for all accessible users or for select user(s) by User Principal Name (UPN). Information presented includes firmware version, nickname as well as Fido certification level.
-   
+
 
 **Get YubiKey information for all users you have access to in the tenant:**
 ```powershell
