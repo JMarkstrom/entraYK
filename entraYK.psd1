@@ -38,7 +38,7 @@
     PrivateData = @{
         PSData = @{
             # Tags applied to this module for discovery
-            Tags = @('YubiKey', 'EntraID', 'FIDO2', 'Security', 'Passkeys', 'Authentication', 'Entra', 'Microsoft Entra ID')
+            Tags = @('YubiKey', 'EntraID', 'FIDO2', 'Security', 'Passkeys', 'Authentication', 'Entra', 'Microsoft-Entra-ID')
 
             # Project site URL
             ProjectUri = 'https://github.com/JMarkstrom/entraYK'
