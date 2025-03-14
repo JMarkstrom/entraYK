@@ -70,6 +70,9 @@ Resulting Entra ID configuration:
 
 **NOTE**: You can find YubiKey AAGUIDs here: https://yubi.co/aaguids
 
+***
+
+
 ### Register a YubiKey as device-bound passkey on behalf of a user
 This Cmdlet (Register-YubiKey) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN, name the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC.
 
