@@ -47,6 +47,8 @@ Resulting Entra ID configuration:
 
 **NOTE**: You can find YubiKey AAGUIDs here: https://yubi.co/aaguids
 
+---
+
 ### Create a custom authentication strength definition
 This Cmdlet (Set-YubiKeyAuthStrength) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either add all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys. An optional user-selected name can be provided using the -Name parameter.
 
@@ -70,8 +72,8 @@ Resulting Entra ID configuration:
 
 **NOTE**: You can find YubiKey AAGUIDs here: https://yubi.co/aaguids
 
-***
 
+---
 
 ### Register a YubiKey as device-bound passkey on behalf of a user
 This Cmdlet (Register-YubiKey) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN, name the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC.
@@ -127,6 +129,7 @@ mike@swjm.blog     YubiKey 5C NFC  5.2 / 5.4     L1
 ```
 **NOTE**: The logic to present firmware version is dependent on Entra ID storing YubiKey AAGUID.
 Because AAGUIDs does not necessarily change with firmware version it is possible that a YubiKey is _either_ one firmware or another as shown above (```5.2 / 5.4```).
+
 
 ## 📖 Roadmap
 Possible improvements includes:
