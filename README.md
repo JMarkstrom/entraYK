@@ -91,7 +91,7 @@ PIN           : 5144
 ### Create a Kerberos object
 This Cmdlet (Set-KerberosObject) creates a Kerberos authentication object in Entra ID, enabling integration with the local Active Directory domain. This allows users to sign in to Windows using FIDO2 security keys and access AD-based resources over the network.
 
-
+**Create a Kerberos object for (ADDS) domain SWJM**
 ```powershell
 Set-KerberosObject -Domain "swjm.blog"
 ```
