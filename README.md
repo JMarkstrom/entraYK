@@ -29,11 +29,11 @@ _To install entraYK:_
 
 ## 📖 Usage
 
-[Configure the "Passkey (FIDO2)" authentication method](#configure-the-"passkey-(fido2)"-authentication-method)    
+[Configure the "Passkey (FIDO2)" authentication method](#configure-the-passkey-fido2-authentication-method)    
 [Create a custom authentication strength definition](#create-a-custom-authentication-strength-definition)  
 [Register a YubiKey as device-bound passkey on behalf of a userl](#register-a-yubikey-as-device-bound-passkey-on-behalf-of-a-userl)  
 [Create a Kerberos object](#create-a-kerberos-object)  
-[List YubiKey attributes for all or select user(s)](#list-yubikey-attributes-for-all-or-select-user(s))   
+[List YubiKey attributes for all or select user(s)](#list-yubikey-attributes-for-all-or-select-users)   
 
 
 ### Configure the "Passkey (FIDO2)" authentication method
