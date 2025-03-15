@@ -29,6 +29,13 @@ _To install entraYK:_
 
 ## 📖 Usage
 
+[Configure the "Passkey (FIDO2)" authentication method](#configure-the-"passkey-(fido2)"-authentication-method)    
+[Create a custom authentication strength definition](#create-a-custom-authentication-strength-definition)  
+[Register a YubiKey as device-bound passkey on behalf of a userl](#register-a-yubikey-as-device-bound-passkey-on-behalf-of-a-userl)  
+[Create a Kerberos object](#create-a-kerberos-object)  
+[List YubiKey attributes for all or select user(s)](#list-yubikey-attributes-for-all-or-select-user(s))   
+
+
 ### Configure the "Passkey (FIDO2)" authentication method
 This Cmdlet (Set-YubiKeyAuthMethod) configures the "Passkey (FIDO2)" authentication method in Microsoft Entra ID. Importantly it configures the method for all users and it enforces FIDO device attestation with white-listing of YubiKeys. The Cmdlet can whitelist either all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. The Cmdlet will reject non Yubico AAGUIDs.
 
