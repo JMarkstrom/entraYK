@@ -112,7 +112,10 @@ To streamline configuration the Cmdlet will fetch Active Directory domain name f
 ```powershell
 Set-KerberosObject
 ```
-
+Sample output:  
+```powershell
+WIP
+```
 ---
 
 
