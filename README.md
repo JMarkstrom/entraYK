@@ -36,6 +36,7 @@ _For usage instructions click a list item below or scroll down_
 - [Create a Kerberos object](#create-a-kerberos-object)  
 - [List YubiKey attributes for all or select user(s)](#list-yubikey-attributes-for-all-or-select-users)   
 
+---
 
 ### Configure the "Passkey (FIDO2)" authentication method
 This Cmdlet (Set-YubiKeyAuthMethod) configures the "Passkey (FIDO2)" authentication method in Microsoft Entra ID. Importantly it configures the method for all users and it enforces FIDO device attestation with white-listing of YubiKeys. The Cmdlet can whitelist either all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. The Cmdlet will reject non Yubico AAGUIDs.
