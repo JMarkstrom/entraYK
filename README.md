@@ -151,7 +151,8 @@ Because AAGUIDs does not necessarily change with firmware version it is possible
 Possible improvements includes:
 - ~~Passkey "EOBO" enrollment using [powershellYK](https://github.com/virot/powershellYK)~~
 - ~~Add ```-Name``` param for ```Set-YubiKeyAuthStrength```~~
-- Entra ID Kerberos object creation
+- ~~Entra ID Kerberos object creation~~
+- Rotation of Entra ID Kerberos object
 - Ability to fetch last used authenticator by UPN
 - Configuration by Certification level (e.g.: "L2 only YubiKeys")
 - Configuration by Firmware version (e.g: "all 5.7+ YubiKeys)
@@ -164,6 +165,7 @@ Donations will support costs such as domain registration and code signing (plann
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?business=RXAPDEYENCPXS&no_recurring=1&item_name=Help+cover+costs+of+the+SWJM+blog+and+app+code+signing%2C+supporting+a+more+secure+future+for+all.&currency_code=USD)
 
 ## 📜 Release History
+* 2025.03.15 `v0.5.0
 * 2025.02.01 `v0.4.0`
 * 2025.02.01 `v0.3.0`
 * 2025.01.28 `v0.2.0`
