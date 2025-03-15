@@ -28,6 +28,7 @@ _To install entraYK:_
 4. Execute command: ```Import-Module entraYK```
 
 ## 📖 Usage
+_For usage instructions click a list item below or scroll down_   
 
 - [Configure the "Passkey (FIDO2)" authentication method](#configure-the-passkey-fido2-authentication-method)    
 - [Create a custom authentication strength definition](#create-a-custom-authentication-strength-definition)  
