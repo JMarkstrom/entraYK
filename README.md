@@ -92,21 +92,6 @@ PIN           : 5144
 
 ---
 
-### Create a Kerberos object
-This Cmdlet (Set-KerberosObject) creates a Kerberos authentication object in Entra ID, enabling integration with the local Active Directory domain. This allows users to sign in to Windows using FIDO2 security keys and access AD-based resources over the network.
-To streamline configuration the Cmdlet will fetch Active Directory domain name from user context and will install the required Entra ID PowerShell module (AzureADHybridAuthenticationManagement) on-behalf-of the current user and will only prompt for cloud identity.
-
-**Create a Kerberos object for current domain**
-```powershell
-Set-KerberosObject
-```
-Sample output:  
-```powershell
-WIP
-```
----
-
-
 ### List YubiKey attributes for all or select user(s)
 This Cmdlet (Get-YubiKeys) lists properties about enrolled YubiKeys in Microsoft Entra ID. It can perform this listing either for all accessible users or for select user(s) by User Principal Name (UPN). Information presented includes firmware version, nickname as well as Fido certification level.
 
