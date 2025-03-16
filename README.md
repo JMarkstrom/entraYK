@@ -7,7 +7,6 @@ Functionality includes the ability to:
 - [Configure the "Passkey (FIDO2)" authentication method](#configure-the-passkey-fido2-authentication-method)    
 - [Create a custom authentication strength definition](#create-a-custom-authentication-strength-definition)  
 - [Register a YubiKey as device-bound passkey on behalf of a userl](#register-a-yubikey-as-device-bound-passkey-on-behalf-of-a-user)  
-- [Create a Kerberos object](#create-a-kerberos-object)  
 - [List YubiKey attributes for all or select user(s)](#list-yubikey-attributes-for-all-or-select-users)   
 
 ## ⚠️ Disclaimer
@@ -140,8 +139,6 @@ Because AAGUIDs does not necessarily change with firmware version it is possible
 Possible improvements includes:
 - ~~Passkey "EOBO" enrollment using [powershellYK](https://github.com/virot/powershellYK)~~
 - ~~Add ```-Name``` param for ```Set-YubiKeyAuthStrength```~~
-- ~~Entra ID Kerberos object creation~~
-- Rotation of Entra ID Kerberos object
 - Ability to fetch last used authenticator by UPN
 - Configuration by Certification level (e.g.: "L2 only YubiKeys")
 - Configuration by Firmware version (e.g: "all 5.7+ YubiKeys)
