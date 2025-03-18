@@ -39,7 +39,6 @@ Adds a custom authentication strength using select YubiKey model(s) by their AAG
 - Confirm that your YubiKey(s) matches the AAGUID(s) being configured. Misconfiguration may result in account lockouts.
 - To ensure account recovery, the authentication strength also includes Temporary Access Pass (TAP) support.
 
-
 .LINK
 https://github.com/JMarkstrom/entraYK
 
@@ -48,7 +47,6 @@ https://yubi.co/aaguids
 #>
 
 # Powershell and module requirements
-#Requires -PSEdition Core
 #Requires -Modules Microsoft.Graph.Authentication
 
 # Function with parameters
@@ -73,158 +71,168 @@ function Set-YubiKeyAuthStrength {
         $Name = "YubiKey"
     )
 
-    # Define required scopes
-    $requiredScopes = @("Policy.ReadWrite.ConditionalAccess", "Policy.ReadWrite.AuthenticationMethod")
+    begin {
 
-    # Check if already connected with correct permissions
-    $context = Get-MgContext
-    $needsAuth = $false
-    $needsBrowserAuth = $false
+        # Call the function to check and install the required module(s)
+        Resolve-ModuleDependencies -ModuleName "Microsoft.Graph.Authentication"
 
-    if ($null -eq $context) {
-        $needsAuth = $true
-        $needsBrowserAuth = $true
-    } else {
-        # Check if all required scopes are present (case-insensitive comparison)
-        $missingScopes = $requiredScopes | Where-Object { $context.Scopes -notcontains $_ }
-        if ($missingScopes.Count -gt 0) {
-            $needsAuth = $true
-            Write-Host "Missing required scopes: $($missingScopes -join ', ')" -ForegroundColor Yellow
-        }
+        # Define required scopes
+        $requiredScopes = @("Policy.ReadWrite.ConditionalAccess", "Policy.ReadWrite.AuthenticationMethod")
+
     }
 
-    # Handle authentication
-    if ($needsAuth) {
-        # Show prompt before any authentication attempts
-        Clear-Host
-        Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)"
-        [System.Console]::ReadKey() > $null
-        Clear-Host
+    process {
 
-        Write-Debug "Attempting to refresh existing token"
-        try {
-            # First try silent token refresh
-            Connect-MgGraph -Scopes $requiredScopes -NoWelcome -ErrorAction Stop
-            
-            # Verify connection was successful
-            $context = Get-MgContext
-            if ($null -eq $context) {
-                $needsBrowserAuth = $true
-            }
-        } catch {
-            Write-Debug "Silent token refresh failed, will attempt browser authentication"
+        # Check if already connected with correct permissions
+        $context = Get-MgContext
+        $needsAuth = $false
+        $needsBrowserAuth = $false
+
+        if ($null -eq $context) {
+            $needsAuth = $true
             $needsBrowserAuth = $true
+        } else {
+            # Check if all required scopes are present (case-insensitive comparison)
+            $missingScopes = $requiredScopes | Where-Object { $context.Scopes -notcontains $_ }
+            if ($missingScopes.Count -gt 0) {
+                $needsAuth = $true
+                Write-Host "Missing required scopes: $($missingScopes -join ', ')" -ForegroundColor Yellow
+            }
         }
 
-        if ($needsBrowserAuth) {
+        # Handle authentication
+        if ($needsAuth) {
+            # Show prompt before any authentication attempts
+            Clear-Host
+            Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)"
+            [System.Console]::ReadKey() > $null
+            Clear-Host
+
+            Write-Debug "Attempting to refresh existing token"
             try {
-                Connect-MgGraph -Scopes $requiredScopes -NoWelcome #-UseDeviceAuthentication
+                # First try silent token refresh
+                Connect-MgGraph -Scopes $requiredScopes -NoWelcome -ErrorAction Stop
                 
-                # Verify final connection status
+                # Verify connection was successful
                 $context = Get-MgContext
                 if ($null -eq $context) {
-                    throw "Authentication failed! Please ensure you approve all requested permissions."
+                    $needsBrowserAuth = $true
                 }
             } catch {
-                Write-Error "Failed to authenticate: $_"
-                throw
+                Write-Debug "Silent token refresh failed, will attempt browser authentication"
+                $needsBrowserAuth = $true
             }
+
+            if ($needsBrowserAuth) {
+                try {
+                    Connect-MgGraph -Scopes $requiredScopes -NoWelcome #-UseDeviceAuthentication
+                    
+                    # Verify final connection status
+                    $context = Get-MgContext
+                    if ($null -eq $context) {
+                        throw "Authentication failed! Please ensure you approve all requested permissions."
+                    }
+                } catch {
+                    Write-Error "Failed to authenticate: $_"
+                    throw
+                }
+            }
+        } else {
+            Write-Debug "Already authenticated with the required permissions."
         }
-    } else {
-        Write-Debug "Already authenticated with the required permissions."
-    }
 
-    # Get information about YubiKeys from helper function
-    $YubiKeyInfo = Get-YubiKeyInfo
+        # Get information about YubiKeys from helper function
+        $YubiKeyInfo = Get-YubiKeyInfo
 
-    # Determine AAGUIDs to use
-    $selectedAAGUIDs = if ($All) { 
-        Write-Debug "Using all supported YubiKey AAGUIDs"
-        $YubiKeyInfo | Select-Object -ExpandProperty AAGUID | Where-Object { 
-            $_ -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' 
+        # Determine AAGUIDs to use
+        $selectedAAGUIDs = if ($All) { 
+            Write-Debug "Using all supported YubiKey AAGUIDs"
+            $YubiKeyInfo | Select-Object -ExpandProperty AAGUID | Where-Object { 
+                $_ -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' 
+            }
+        } else { 
+            Write-Debug "Using specified AAGUID(s): $($AAGUID -join ', ')"
+            $validAAGUIDs = @()
+            foreach ($guid in $AAGUID) {
+                Write-Debug "Checking GUID: $guid"
+                if ($guid -in ($YubiKeyInfo | Select-Object -ExpandProperty AAGUID)) {
+                    $validAAGUIDs += $guid
+                } else {
+                    Write-Error "'$guid' is not a valid YubiKey AAGUID!"
+                    return
+                }
+            }
+            $validAAGUIDs
         }
-    } else { 
-        Write-Debug "Using specified AAGUID(s): $($AAGUID -join ', ')"
-        $validAAGUIDs = @()
-        foreach ($guid in $AAGUID) {
-            Write-Debug "Checking GUID: $guid"
-            if ($guid -in ($YubiKeyInfo | Select-Object -ExpandProperty AAGUID)) {
-                $validAAGUIDs += $guid
-            } else {
-                Write-Error "'$guid' is not a valid YubiKey AAGUID!"
-                return
-            }
+
+        Write-Debug "Final valid AAGUIDs: $($selectedAAGUIDs -join ', ')"
+
+        # Exit if no AAGUIDs were selected
+        if (-not $selectedAAGUIDs) {
+            Write-Error "No valid AAGUIDs were provided. Operation cancelled."
+            return
         }
-        $validAAGUIDs
-    }
 
-    Write-Debug "Final valid AAGUIDs: $($selectedAAGUIDs -join ', ')"
+        Write-Debug "Final selectedAAGUIDs before API call: $($selectedAAGUIDs | ConvertTo-Json)"
 
-    # Exit if no AAGUIDs were selected
-    if (-not $selectedAAGUIDs) {
-        Write-Error "No valid AAGUIDs were provided. Operation cancelled."
-        return
-    }
+        # Warn the user on pending configuration:
+        Clear-Host
+        Write-Warning "This will add a custom authentication strength containing YubiKey(s) and single-use TAP:`n"
 
-    Write-Debug "Final selectedAAGUIDs before API call: $($selectedAAGUIDs | ConvertTo-Json)"
-
-    # Warn the user on pending configuration:
-    Clear-Host
-    Write-Warning "This will add a custom authentication strength containing YubiKey(s) and single-use TAP:`n"
-
-    $proceed = $false  # Flag to control continuation
-    do {
-        $ans = Read-Host "Proceed with configuration? (Y/n)"
-        switch ($ans) {
-            'y' {
-                Write-Debug "Continuing with Entra ID configuration..."
-                Clear-Host
-                $proceed = $true  # Set flag to exit the loop
-                break
+        $proceed = $false  # Flag to control continuation
+        do {
+            $ans = Read-Host "Proceed with configuration? (Y/n)"
+            switch ($ans) {
+                'y' {
+                    Write-Debug "Continuing with Entra ID configuration..."
+                    Clear-Host
+                    $proceed = $true  # Set flag to exit the loop
+                    break
+                }
+                'n' {
+                    Clear-Host
+                    Write-Output "Operation cancelled."
+                    return
+                }
+                default {
+                    Write-Output "Invalid input. Please enter 'y' or 'n'."
+                }
             }
-            'n' {
-                Clear-Host
-                Write-Output "Operation cancelled."
-                return
-            }
-            default {
-                Write-Output "Invalid input. Please enter 'y' or 'n'."
-            }
+        } while (-not $proceed)  # Keep looping until $proceed is true
+
+        # Run the call
+        $Uri = "https://graph.microsoft.com/v1.0/policies/authenticationStrengthPolicies"
+        $Body = @{
+            "displayName"           = $Name
+            "description"          = "YubiKey as a device-bound passkey"
+            "requirementsSatisfied" = "mfa"
+            "allowedCombinations"   = @("fido2", "temporaryAccessPassOneTime")
+            "combinationConfigurations@odata.context" = "https://graph.microsoft.com/v1.0/$metadata#policies/authenticationStrengthPolicies('2cfa0df2-3dea-481b-b183-dc4dddae201a')/combinationConfigurations"
+            "combinationConfigurations" = @(
+                @{
+                    "@odata.type"       = "#microsoft.graph.fido2CombinationConfiguration"
+                    "id"                = "0a12d2e3-436e-498e-8484-fc8c06c8a846"
+                    "appliesToCombinations" = @("fido2")
+                    "allowedAAGUIDs"    = @($selectedAAGUIDs)  # Wrap in @() to ensure array format
+                }
+            )
+        } | ConvertTo-Json -Depth 3 -Compress
+
+        try {
+            Invoke-MgGraphRequest -Method POST -Uri $Uri -Body $Body -ContentType "application/json" | Out-Null
+            Write-Host "Successfully added custom authentication strength to Entra ID." -ForegroundColor Green
+        } catch {
+            Write-Host "Unable to add authentication strength (check if definition already exists)!" -ForegroundColor Red
+            #Write-Host $_.Exception.Message -ForegroundColor Red
+            #Write-Debug $_.Exception.Response.Content
         }
-    } while (-not $proceed)  # Keep looping until $proceed is true
-
-    # Run the call
-    $Uri = "https://graph.microsoft.com/v1.0/policies/authenticationStrengthPolicies"
-    $Body = @{
-        "displayName"           = $Name
-        "description"          = "YubiKey as a device-bound passkey"
-        "requirementsSatisfied" = "mfa"
-        "allowedCombinations"   = @("fido2", "temporaryAccessPassOneTime")
-        "combinationConfigurations@odata.context" = "https://graph.microsoft.com/v1.0/$metadata#policies/authenticationStrengthPolicies('2cfa0df2-3dea-481b-b183-dc4dddae201a')/combinationConfigurations"
-        "combinationConfigurations" = @(
-            @{
-                "@odata.type"       = "#microsoft.graph.fido2CombinationConfiguration"
-                "id"                = "0a12d2e3-436e-498e-8484-fc8c06c8a846"
-                "appliesToCombinations" = @("fido2")
-                "allowedAAGUIDs"    = @($selectedAAGUIDs)  # Wrap in @() to ensure array format
-            }
-        )
-    } | ConvertTo-Json -Depth 3 -Compress
-
-    try {
-        Invoke-MgGraphRequest -Method POST -Uri $Uri -Body $Body -ContentType "application/json" | Out-Null
-        Write-Host "Successfully added custom authentication strength to Entra ID." -ForegroundColor Green
-    } catch {
-        Write-Host "Unable to add authentication strength (check if definition already exists)!" -ForegroundColor Red
-        #Write-Host $_.Exception.Message -ForegroundColor Red
-        #Write-Debug $_.Exception.Response.Content
-    }
-    # Disconnect from Microsoft Graph
-    try {
-        Write-Debug "Disconnecting from Microsoft Graph..."
-        Disconnect-MgGraph | Out-Null  # Suppress output
-        Write-Debug "Disconnected from Microsoft Graph"
-    } catch {
-        Write-Warning "Failed to disconnect from Microsoft Graph: $_"
+        # Disconnect from Microsoft Graph
+        try {
+            Write-Debug "Disconnecting from Microsoft Graph..."
+            Disconnect-MgGraph | Out-Null  # Suppress output
+            Write-Debug "Disconnected from Microsoft Graph"
+        } catch {
+            Write-Warning "Failed to disconnect from Microsoft Graph: $_"
+        }
     }
 }
