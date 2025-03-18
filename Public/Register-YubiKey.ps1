@@ -92,8 +92,8 @@ function Register-YubiKey {
         # Handle authentication
         if ($needsAuth) {
             # Show prompt before any authentication attempts
-            #Clear-Host
-            Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)"
+            Clear-Host
+            Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)" -ForegroundColor Yellow
             [System.Console]::ReadKey() > $null
             Clear-Host
 
