@@ -3,7 +3,7 @@
     RootModule = 'entraYK.psm1'
 
     # Version number of this module.
-    ModuleVersion = '0.4.0'
+    ModuleVersion = '0.6.0'
 
     # ID used to uniquely identify this module
     GUID = '8f742c2f-7a76-4c6a-9c69-b2f2e14c3d9b'
@@ -38,7 +38,7 @@
     PrivateData = @{
         PSData = @{
             # Tags applied to this module for discovery
-            Tags = @('YubiKey', 'EntraID', 'FIDO2', 'Security', 'Passkeys', 'Authentication', 'Entra', 'Microsoft-Entra-ID')
+            Tags = @('YubiKey', 'Entra-ID', 'FIDO2', 'Security', 'Passkeys', 'Authentication', 'Entra', 'Microsoft-Entra-ID')
 
             # Project site URL
             ProjectUri = 'https://github.com/JMarkstrom/entraYK'
