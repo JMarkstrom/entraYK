@@ -65,7 +65,7 @@ Set-YubiKeyAuthStrength -All -Name "AAL3"
 
 Resulting Entra ID configuration:   
 
-![](/images/Set-YubiKeyAuthStrength.png)
+giimages/Set-YubiKeyAuthStrength.png)
 
 **NOTE**: You can find YubiKey AAGUIDs here: https://yubi.co/aaguids
 
@@ -73,7 +73,7 @@ Resulting Entra ID configuration:
 ---
 
 ### Register a YubiKey as device-bound passkey on behalf of a user
-This Cmdlet (Register-YubiKey) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN, name the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC.
+This Cmdlet (Register-YubiKey) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN, name the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC. Programming output is presented on screen, as well as written to an output file (`output.csv`) in the user's working directory.
 
 
 **Register a YubiKey on behalf of a user:**
@@ -82,11 +82,10 @@ Register-YubiKey -User "alice@swjm.blog
 ```
 Sample output:   
 
-```bash
-UPN           : alice@swjm.blog
-Nickname      : YubiKey with S/N: 23616243
-Serial Number : 23616243
-PIN           : 5144
+```csv
+UPN,Model,Serial Number,PIN
+alice@swjm.blog,YubiKey 5C NFC,23616243,5144
+bob@swjm.blog,YubiKey 5C NFC,17735649,4060
 ```
 ![](/images/Register-YubiKey.png)
 
@@ -136,6 +135,7 @@ Donations will support costs such as domain registration and code signing (plann
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?business=RXAPDEYENCPXS&no_recurring=1&item_name=Help+cover+costs+of+the+SWJM+blog+and+app+code+signing%2C+supporting+a+more+secure+future+for+all.&currency_code=USD)
 
 ## 📜 Release History
+* 2025.03.18 `v0.6.0`
 * 2025.03.17 `v0.5.0`
 * 2025.02.01 `v0.4.0`
 * 2025.02.01 `v0.3.0`
