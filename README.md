@@ -135,6 +135,7 @@ Donations will support costs such as domain registration and code signing (plann
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?business=RXAPDEYENCPXS&no_recurring=1&item_name=Help+cover+costs+of+the+SWJM+blog+and+app+code+signing%2C+supporting+a+more+secure+future+for+all.&currency_code=USD)
 
 ## 📜 Release History
+* 2025.03.18 `v0.7.0`
 * 2025.03.18 `v0.6.0`
 * 2025.03.17 `v0.5.0`
 * 2025.02.01 `v0.4.0`
