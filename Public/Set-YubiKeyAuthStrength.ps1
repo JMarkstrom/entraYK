@@ -20,7 +20,7 @@ Name of the authentication strength policy
 
 .EXAMPLE
 Set-YubiKeyAuthStrength -All
-Adds a custom authentication strength using all FIDO2 passkey-capable YubiKey models
+Adds a custom authentication strength using all YubiKey models with a firmware version of 5.7 or higher.
 
 .EXAMPLE
 Set-YubiKeyAuthStrength -AAGUID "fa2b99dc-9e39-4257-8f92-4a30d23c4118"
@@ -31,7 +31,7 @@ Set-YubiKeyAuthStrength -AAGUID "fa2b99dc-9e39-4257-8f92-4a30d23c4118", "2fc0579
 Adds a custom authentication strength using select YubiKey model(s) by their AAGUID(s).
 
 .EXAMPLE
-Set-YubiKeyAuthStrength -AAGUID "a25342c0-3cdc-4414-8e46-f4807fca511c" -Name "YubiKey 5.7"
+Set-YubiKeyAuthStrength -AAGUID "a25342c0-3cdc-4414-8e46-f4807fca511c" -Name "AAL3"
 Adds a custom authentication strength using select YubiKey model(s) by their AAGUID(s) with a custom policy name.
 
 .NOTES
@@ -61,7 +61,7 @@ function Set-YubiKeyAuthStrength {
 
         [Parameter(Mandatory = $true,
                   ParameterSetName = "AllAAGUIDs",
-                  HelpMessage = "Use all supported YubiKey AAGUIDs")]
+                  HelpMessage = "Use all YubiKeys with firmware version 5.7 or higher")]
         [switch]
         $All,
 
@@ -104,7 +104,7 @@ function Set-YubiKeyAuthStrength {
         if ($needsAuth) {
             # Show prompt before any authentication attempts
             Clear-Host
-            Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)"
+            Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)" -ForegroundColor Yellow
             [System.Console]::ReadKey() > $null
             Clear-Host
 
@@ -146,10 +146,10 @@ function Set-YubiKeyAuthStrength {
 
         # Determine AAGUIDs to use
         $selectedAAGUIDs = if ($All) { 
-            Write-Debug "Using all supported YubiKey AAGUIDs"
-            $YubiKeyInfo | Select-Object -ExpandProperty AAGUID | Where-Object { 
-                $_ -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' 
-            }
+            Write-Debug "Using all supported YubiKeys with firmware version 5.7 or higher"
+            $YubiKeyInfo | Where-Object { 
+                [version]($_.Firmware.Split(' / ')[0]) -ge [version]'5.7'
+            } | Select-Object -ExpandProperty AAGUID
         } else { 
             Write-Debug "Using specified AAGUID(s): $($AAGUID -join ', ')"
             $validAAGUIDs = @()
@@ -179,26 +179,25 @@ function Set-YubiKeyAuthStrength {
         Clear-Host
         Write-Warning "This will add a custom authentication strength containing YubiKey(s) and single-use TAP:`n"
 
-        $proceed = $false  # Flag to control continuation
+        $proceed = $false
         do {
-            $ans = Read-Host "Proceed with configuration? (Y/n)"
-            switch ($ans) {
-                'y' {
+            $ans = Read-Host "Proceed? (Y/n)"
+            switch ($ans.ToLower()) {
+                {$_ -eq 'y' -or $_ -eq ''} {
                     Write-Debug "Continuing with Entra ID configuration..."
-                    Clear-Host
-                    $proceed = $true  # Set flag to exit the loop
+                    $proceed = $true
                     break
                 }
                 'n' {
                     Clear-Host
-                    Write-Output "Operation cancelled."
+                    Write-Host "Operation cancelled by user." -ForegroundColor Red
                     return
                 }
                 default {
                     Write-Output "Invalid input. Please enter 'y' or 'n'."
                 }
             }
-        } while (-not $proceed)  # Keep looping until $proceed is true
+        } while (-not $proceed)
 
         # Run the call
         $Uri = "https://graph.microsoft.com/v1.0/policies/authenticationStrengthPolicies"
@@ -220,11 +219,18 @@ function Set-YubiKeyAuthStrength {
 
         try {
             Invoke-MgGraphRequest -Method POST -Uri $Uri -Body $Body -ContentType "application/json" | Out-Null
+
+            # Clear screen and display summary
+            Clear-Host
+            Write-Host "*********************************************************************" -ForegroundColor Yellow
+            Write-Host "YUBIKEY AUTHENTICATION STRENGTH CONFIGURATION COMPLETED SUCCESSFULLY!" -ForegroundColor Yellow
+            Write-Host "*********************************************************************" -ForegroundColor Yellow
             Write-Host "Successfully added custom authentication strength to Entra ID." -ForegroundColor Green
+            Write-Host ""
         } catch {
+            #Clear-Host
             Write-Host "Unable to add authentication strength (check if definition already exists)!" -ForegroundColor Red
-            #Write-Host $_.Exception.Message -ForegroundColor Red
-            #Write-Debug $_.Exception.Response.Content
+            Write-Debug $_.Exception.Response.Content
         }
         # Disconnect from Microsoft Graph
         try {

@@ -77,7 +77,7 @@ function Get-YubiKeys {
         if ($needsAuth) {
             # Show prompt before any authentication attempts
             Clear-Host
-            Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)"
+            Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)" -ForegroundColor Yellow
             [System.Console]::ReadKey() > $null
             Clear-Host
 
@@ -144,15 +144,15 @@ function Get-YubiKeys {
             $proceed = $false
             do {
                 $ans = Read-Host "Proceed? (Y/n)"
-                switch ($ans) {
-                    'y' {
+                switch ($ans.ToLower()) {
+                    {$_ -eq 'y' -or $_ -eq ''} {
                         Write-Debug "`nProceeding with retrieval of selected users..."
                         $proceed = $true
                         break
                     }
                     'n' {
                         Clear-Host
-                        Write-Output "Operation cancelled."
+                        Write-Host "Operation cancelled by user." -ForegroundColor Red
                         return
                     }
                     default {
@@ -227,8 +227,15 @@ function Get-YubiKeys {
             }
         }
 
+        # Clear screen and display summary
+        Clear-Host
+        Write-Host "*************************************************************************************************" -ForegroundColor Yellow
+        Write-Host "YUBIKEY ASSIGNMENTS REPORT" -ForegroundColor Yellow
+        Write-Host "*************************************************************************************************" -ForegroundColor Yellow
+        Write-Host "ℹ️ A user with multiple assignments will appear multiple times!" -ForegroundColor Yellow
         # Return the report
         $report | Format-Table -AutoSize
+        Write-Host ""
 
         # Disconnect from Microsoft Graph
         try {

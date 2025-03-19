@@ -113,7 +113,7 @@ function Set-YubiKeyAuthMethod {
         if ($needsAuth) {
             # Show prompt before any authentication attempts
             Clear-Host
-            Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)"
+            Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)" -ForegroundColor Yellow
             [System.Console]::ReadKey() > $null
             Clear-Host
 
@@ -154,26 +154,26 @@ function Set-YubiKeyAuthMethod {
         Clear-Host
         Write-Warning "This will enable the Passkey (FIDO2) authentication method with YubiKey(s):`n"
 
-        $proceed = $false  # Flag to control continuation
+        $proceed = $false
         do {
-            $ans = Read-Host "Proceed with configuration? (Y/n)"
-            switch ($ans) {
-                'y' {
+            $ans = Read-Host "Proceed? (Y/n)"
+            switch ($ans.ToLower()) {
+                {$_ -eq 'y' -or $_ -eq ''} {
                     Write-Debug "Continuing with Entra ID configuration..."
-                    Clear-Host
-                    $proceed = $true  # Set flag to exit the loop
+                    $proceed = $true
                     break
                 }
                 'n' {
                     Clear-Host
-                    Write-Output "Operation cancelled."
+                    Write-Host "Operation cancelled by user." -ForegroundColor Red
                     return
                 }
                 default {
                     Write-Output "Invalid input. Please enter 'y' or 'n'."
                 }
             }
-        } while (-not $proceed)  # Keep looping until $proceed is true
+        } while (-not $proceed)
+
 
         # Get the FIDO2 authentication method configuration
         $Uri = "https://graph.microsoft.com/beta/authenticationMethodsPolicy/authenticationMethodConfigurations/FIDO2"
@@ -199,8 +199,17 @@ function Set-YubiKeyAuthMethod {
 
         try {
             Invoke-MgGraphRequest -Method PATCH -Uri $Uri -Body $Body -ContentType "application/json" | Out-Null
+
+            # Clear screen and display summary
+            Clear-Host
+            Write-Host "*************************************************************************" -ForegroundColor Yellow
+            Write-Host "YUBIKEY AUTHENTICATION METHOD CONFIGURATION COMPLETED SUCCESSFULLY!" -ForegroundColor Yellow
+            Write-Host "*************************************************************************" -ForegroundColor Yellow
             Write-Host "Successfully configured Passkey (FIDO2) method with YubiKeys in Entra ID." -ForegroundColor Green
+            Write-Host ""
+
         } catch {
+            Clear-Host
             Write-Host "Failed to configure authentication method!" -ForegroundColor Red
         }
 
