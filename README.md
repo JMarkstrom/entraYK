@@ -47,10 +47,10 @@ Resulting Entra ID configuration:
 ---
 
 ### Create a custom authentication strength definition
-This Cmdlet (Set-YubiKeyAuthStrength) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either add all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys. An optional user-selected name can be provided using the -Name parameter.
+This Cmdlet (Set-YubiKeyAuthStrength) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either add all YubiKeys (with firmware `5.7` or greater) or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys. An optional user-selected name can be provided using the -Name parameter.
 
    
-**Add a custom authentication strength using _all_ FIDO2 passkey-capable YubiKey models:**
+**Add a custom authentication strength using _all_ YubiKey models with firmware 5.7+:**
 ```powershell
 Set-YubiKeyAuthStrength -All
 ```
@@ -135,6 +135,7 @@ Donations will support costs such as domain registration and code signing (plann
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?business=RXAPDEYENCPXS&no_recurring=1&item_name=Help+cover+costs+of+the+SWJM+blog+and+app+code+signing%2C+supporting+a+more+secure+future+for+all.&currency_code=USD)
 
 ## 📜 Release History
+* 2025.03.19 `v0.8.0`
 * 2025.03.18 `v0.7.0`
 * 2025.03.18 `v0.6.0`
 * 2025.03.17 `v0.5.0`
