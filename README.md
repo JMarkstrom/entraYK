@@ -124,8 +124,6 @@ Possible improvements includes:
 - ~~Passkey "EOBO" enrollment using [powershellYK](https://github.com/virot/powershellYK)~~
 - ~~Add ```-Name``` param for ```Set-YubiKeyAuthStrength```~~
 - Ability to fetch last used authenticator by UPN
-- Configuration by Certification level (e.g.: "L2 only YubiKeys")
-- Configuration by Firmware version (e.g: "all 5.7+ YubiKeys)
 
 
 ### 🥷🏻 Contributing
