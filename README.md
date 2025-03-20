@@ -27,7 +27,7 @@ _To install entraYK:_
 ## 📖 Usage
 
 ### Configure the "Passkey (FIDO2)" authentication method
-This Cmdlet (Set-YubiKeyAuthMethod) configures the "Passkey (FIDO2)" authentication method in Microsoft Entra ID. Importantly it configures the method for all users and it enforces FIDO device attestation with white-listing of YubiKeys. The Cmdlet can whitelist either all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. The Cmdlet will reject non Yubico AAGUIDs.
+This Cmdlet (`Set-YubiKeyAuthMethod`) configures the "Passkey (FIDO2)" authentication method in Microsoft Entra ID. Importantly it configures the method for all users and it enforces FIDO device attestation with white-listing of YubiKeys. The Cmdlet can whitelist either all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. The Cmdlet will reject non Yubico AAGUIDs.
 
    
 **Enable the Passkey method defining all YubiKey models:**
@@ -47,7 +47,7 @@ Resulting Entra ID configuration:
 ---
 
 ### Create a custom authentication strength definition
-This Cmdlet (Set-YubiKeyAuthStrength) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either add all YubiKeys (with firmware `5.7` or greater) or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys. An optional user-selected name can be provided using the -Name parameter.
+This Cmdlet (`Set-YubiKeyAuthStrength`) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either add all YubiKeys (with firmware `5.7` or greater) or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys. An optional user-selected name can be provided using the `-Name` parameter.
 
    
 **Add a custom authentication strength using _all_ YubiKey models with firmware 5.7+:**
@@ -73,7 +73,7 @@ Resulting Entra ID configuration:
 ---
 
 ### Register a YubiKey as device-bound passkey on behalf of a user
-This Cmdlet (Register-YubiKey) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN, name the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC. Programming output is presented on screen, as well as written to an output file (`output.csv`) in the user's working directory.
+This Cmdlet (`Register-YubiKey`) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN, name the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC. Programming output is presented on screen, as well as written to an output file (`output.csv`) in the user's working directory.
 
 
 **Register a YubiKey on behalf of a user:**
@@ -92,7 +92,7 @@ bob@swjm.blog,YubiKey 5C NFC,17735649,4060
 ---
 
 ### List YubiKey attributes for all or select user(s)
-This Cmdlet (Get-YubiKeys) lists properties about enrolled YubiKeys in Microsoft Entra ID. It can perform this listing either for all accessible users or for select user(s) by User Principal Name (UPN). Information presented includes firmware version, nickname as well as Fido certification level.
+This Cmdlet (`Get-YubiKeys`) lists properties about enrolled YubiKeys in Microsoft Entra ID. It can perform this listing either for all accessible users or for select user(s) by User Principal Name (UPN). Information presented includes firmware version, nickname as well as Fido certification level.
 
 
 **Get YubiKey information for all users you have access to in the tenant:**
