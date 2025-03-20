@@ -67,7 +67,7 @@ Resulting Entra ID configuration:
 
 ![](/images/Set-YubiKeyAuthStrength.png)
 
-**NOTE**: You can find YubiKey AAGUIDs here: https://yubi.co/aaguids
+**NOTE**: You can find YubiKey AAGUIDs [here](https://jmarkstrom.github.io/aaguids/)
 
 
 ---
