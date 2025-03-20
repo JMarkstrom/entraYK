@@ -65,7 +65,7 @@ Set-YubiKeyAuthStrength -All -Name "AAL3"
 
 Resulting Entra ID configuration:   
 
-giimages/Set-YubiKeyAuthStrength.png)
+![](/images/Set-YubiKeyAuthStrength.png)
 
 **NOTE**: You can find YubiKey AAGUIDs here: https://yubi.co/aaguids
 
