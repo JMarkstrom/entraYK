@@ -123,6 +123,7 @@ Because AAGUIDs does not necessarily change with firmware version it is possible
 Possible improvements includes:
 - ~~Passkey "EOBO" enrollment using [powershellYK](https://github.com/virot/powershellYK)~~
 - ~~Add ```-Name``` param for ```Set-YubiKeyAuthStrength```~~
+- Create a Conditional Access Policy
 - Ability to fetch last used authenticator by UPN
 
 
