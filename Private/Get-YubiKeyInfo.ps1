@@ -23,7 +23,7 @@
         @{Model="YubiKey 5"; Firmware="5.1"; AAGUID="cb69481e-8ff7-4039-93ec-0a2729a154a8"; Certification="Level 1"},
         @{Model="YubiKey 5"; Firmware="5.2 / 5.4"; AAGUID="ee882879-721c-4913-9775-3dfcce97072a"; Certification="Level 1"},
         # YubiKey 5 NFC (USB-A)
-        #@{Model="YubiKey 5 NFC"; Firmware="5.1"; AAGUID="fa2b99dc-9e39-4257-8f92-4a30d23c4118"; Certification="Level 1"},
+        @{Model="YubiKey 5 NFC"; Firmware="5.1"; AAGUID="fa2b99dc-9e39-4257-8f92-4a30d23c4118"; Certification="Level 1"},
         @{Model="YubiKey 5 NFC"; Firmware="5.2 / 5.4"; AAGUID="2fc0579f-8113-47ea-b116-bb5a8db9202a"; Certification="Level 1"},
         @{Model="YubiKey 5 NFC"; Firmware="5.7"; AAGUID="a25342c0-3cdc-4414-8e46-f4807fca511c"; Certification="Level 2"},      
         @{Model="YubiKey 5 NFC"; Firmware="5.7"; AAGUID="d7781e5d-e353-46aa-afe2-3ca49f13332a"; Certification="Level 2"},
