@@ -124,6 +124,7 @@ Possible improvements includes:
 - ~~Passkey "EOBO" enrollment using [powershellYK](https://github.com/virot/powershellYK)~~
 - ~~Add ```-Name``` param for ```Set-YubiKeyAuthStrength```~~
 - Create a Conditional Access Policy
+- Create Kerberos object (pending Microsoft PS Core support)
 - Ability to fetch last used authenticator by UPN
 
 
