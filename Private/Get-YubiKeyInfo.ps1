@@ -88,6 +88,7 @@
         @{Model="YubiKey 5Ci"; Firmware="5.7"; AAGUID="3b24bf49-1d45-4484-a917-13175df0867b"; Certification="Level 2"}, # EA capable
         # YubiKey Bio FIDO Edition
         @{Model="YubiKey Bio FIDO Ed."; Firmware="5.5 / 5.6"; AAGUID="d8522d9f-575b-4866-88a9-ba99fa02f35b"; Certification="Level 1"},
+        @{Model="YubiKey Bio FIDO Ed."; Firmware="5.6"; AAGUID="83c47309-aabb-4108-8470-8be838b573cb"; Certification="Level 1"}, #EA capable
         @{Model="YubiKey Bio FIDO Ed."; Firmware="5.7"; AAGUID="dd86a2da-86a0-4cbe-b462-4bd31f57bc6f"; Certification="Level 2"},
         @{Model="YubiKey Bio FIDO Ed."; Firmware="5.7"; AAGUID="7409272d-1ff9-4e10-9fc9-ac0019c124fd"; Certification="Level 2"},
         @{Model="YubiKey Bio FIDO Ed."; Firmware="5.7"; AAGUID="8c39ee86-7f9a-4a95-9ba3-f6b097e5c2ee"; Certification="Level 2"}, #EA capable
