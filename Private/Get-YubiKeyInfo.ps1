@@ -112,6 +112,9 @@
         @{Model="Security Key NFC Enterprise Ed."; Firmware="5.7"; AAGUID="47ab2fb4-66ac-4184-9ae1-86be814012d5"; Certification="Level 2"},
         @{Model="Security Key NFC Enterprise Ed."; Firmware="5.7"; AAGUID="ed042a3a-4b22-4455-bb69-a267b652ae7e"; Certification="Level 2"},
         @{Model="Security Key NFC Enterprise Ed."; Firmware="5.7"; AAGUID="9ff4cc65-6154-4fff-ba09-9e2af7882ad2"; Certification="Level 2"}, # EA capable
-        @{Model="Security Key NFC Enterprise Ed."; Firmware="5.7"; AAGUID="6ab56fad-881f-4a43-acb2-0be065924522"; Certification="Level 2"} # EA capable
+        @{Model="Security Key NFC Enterprise Ed."; Firmware="5.7"; AAGUID="6ab56fad-881f-4a43-acb2-0be065924522"; Certification="Level 2"}, # EA capable
+        @{Model="Security Key NFC Enterprise Ed."; Firmware="5.7"; AAGUID="72c6b72d-8512-4c66-8359-9d3d10d9222f"; Certification="Level 2"} # EA capable
+
+
     )
 } 
