@@ -134,7 +134,7 @@ function Set-YubiKeyAuthMethod {
 
             if ($needsBrowserAuth) {
                 try {
-                    Connect-MgGraph -Scopes $requiredScopes -NoWelcome # -UseDeviceAuthentication
+                    Connect-MgGraph -Scopes $requiredScopes -NoWelcome
                     
                     # Verify final connection status
                     $context = Get-MgContext

@@ -46,9 +46,6 @@ https://github.com/JMarkstrom/entraYK
 https://yubi.co/aaguids
 #>
 
-# Powershell and module requirements
-#Requires -Modules Microsoft.Graph.Authentication
-
 # Function with parameters
 function Set-YubiKeyAuthStrength {
     [CmdletBinding()]
@@ -125,7 +122,7 @@ function Set-YubiKeyAuthStrength {
 
             if ($needsBrowserAuth) {
                 try {
-                    Connect-MgGraph -Scopes $requiredScopes -NoWelcome #-UseDeviceAuthentication
+                    Connect-MgGraph -Scopes $requiredScopes -NoWelcome
                     
                     # Verify final connection status
                     $context = Get-MgContext
