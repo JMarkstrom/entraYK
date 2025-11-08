@@ -8,7 +8,7 @@
   
     .NOTES
     This is an internal function and should not be exported from the module.
-    Last updated: 2025-04-29
+    Last updated: 2025-11-08
 
     .LINK
     https://yubi.co/aaguids
@@ -33,6 +33,8 @@
         @{Model="YubiKey 5 NFC FIPS"; Firmware="5.7"; AAGUID="79f3c8ba-9e35-484b-8f47-53a5a0f5c630"; Certification="Level 2"}, # FIPS RC, EA capable        
         @{Model="YubiKey 5 NFC"; Firmware="5.7"; AAGUID="1ac71f64-468d-4fe0-bef1-0e5f2f551f18"; Certification="Level 2"}, # EA capable
         @{Model="YubiKey 5 NFC"; Firmware="5.7"; AAGUID="6ab56fad-881f-4a43-acb2-0be065924522"; Certification="Level 2"}, # EA capable
+        @{Model="YubiKey 5 NFC EPIN"; Firmware="5.7"; AAGUID="662ef48a-95e2-4aaa-a6c1-5b9c40375824"; Certification="Level 2"}, # Enhanced PIN
+        @{Model="YubiKey 5 NFC EPIN"; Firmware="5.7"; AAGUID="b2c1a50b-dad8-4dc7-ba4d-0ce9597904bc"; Certification="Level 2"}, # Enhanced PIN, EA capable
         # YubiKey 5C NFC (USB-C)
         @{Model="YubiKey 5C NFC"; Firmware="5.2 / 5.4"; AAGUID="2fc0579f-8113-47ea-b116-bb5a8db9202a"; Certification="Level 1"},
         @{Model="YubiKey 5C NFC"; Firmware="5.7"; AAGUID="a25342c0-3cdc-4414-8e46-f4807fca511c"; Certification="Level 2"},
@@ -43,6 +45,8 @@
         @{Model="YubiKey 5C NFC FIPS"; Firmware="5.7"; AAGUID="79f3c8ba-9e35-484b-8f47-53a5a0f5c630"; Certification="Level 2"}, # FIPS RC, EA capable  
         @{Model="YubiKey 5C NFC"; Firmware="5.7"; AAGUID="1ac71f64-468d-4fe0-bef1-0e5f2f551f18"; Certification="Level 2"}, # EA capable
         @{Model="YubiKey 5C NFC"; Firmware="5.7"; AAGUID="6ab56fad-881f-4a43-acb2-0be065924522"; Certification="Level 2"}, # EA capable       
+        @{Model="YubiKey 5C NFC EPIN"; Firmware="5.7"; AAGUID="662ef48a-95e2-4aaa-a6c1-5b9c40375824"; Certification="Level 2"}, # Enhanced PIN
+        @{Model="YubiKey 5C NFC EPIN"; Firmware="5.7"; AAGUID="b2c1a50b-dad8-4dc7-ba4d-0ce9597904bc"; Certification="Level 2"}, # Enhanced PIN, EA capable
         # YubiKey 5 Nano (USB-A)
         @{Model="YubiKey 5 Nano"; Firmware="5.1"; AAGUID="cb69481e-8ff7-4039-93ec-0a2729a154a8"; Certification="Level 1"},
         @{Model="YubiKey 5 Nano"; Firmware="5.2 / 5.4"; AAGUID="ee882879-721c-4913-9775-3dfcce97072a"; Certification="Level 1"},

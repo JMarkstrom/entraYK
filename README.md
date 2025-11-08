@@ -6,7 +6,7 @@ Functionality includes the ability to:
 
 - [Configure the "Passkey (FIDO2)" authentication method](#configure-the-passkey-fido2-authentication-method)    
 - [Create a custom authentication strength definition](#create-a-custom-authentication-strength-definition)  
-- [Register a YubiKey as device-bound passkey on behalf of a userl](#register-a-yubikey-as-device-bound-passkey-on-behalf-of-a-user)  
+- [Register a YubiKey as device-bound passkey on behalf of a user or group](#register-a-yubikey-as-device-bound-passkey-on-behalf-of-a-user-or-group)  
 - [List YubiKey attributes for all or select user(s)](#list-yubikey-attributes-for-all-or-select-users)   
 
 ## ⚠️ Disclaimer
@@ -72,14 +72,21 @@ Resulting Entra ID configuration:
 
 ---
 
-### Register a YubiKey as device-bound passkey on behalf of a user
+### Register a YubiKey as device-bound passkey on behalf of a user or group
 This Cmdlet (`Register-YubiKey`) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN, name the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC. Programming output is presented on screen, as well as written to an output file (`output.csv`) in the user's working directory.
 
+You can register a YubiKey for a single user or for all members of a group. When using the `-Group` parameter, you will need a separate YubiKey for each group member.
 
-**Register a YubiKey on behalf of a user:**
+**Register a YubiKey on behalf of a single user:**
 ```powershell
-Register-YubiKey -User "alice@swjm.blog
+Register-YubiKey -User "alice@swjm.blog"
 ```
+
+**Register YubiKeys for all members of a group:**
+```powershell
+Register-YubiKey -Group "Users"
+```
+
 Sample output:   
 
 ```csv
@@ -88,6 +95,8 @@ alice@swjm.blog,YubiKey 5C NFC,23616243,5144
 bob@swjm.blog,YubiKey 5C NFC,17735649,4060
 ```
 ![](/images/Register-YubiKey.png)
+
+**NOTE**: When using `-Group`, ensure you have a sufficient supply of YubiKeys (one per group member). The cmdlet will prompt you to insert a new YubiKey for each user during the registration process.
 
 ---
 
@@ -135,6 +144,7 @@ Donations will support costs such as domain registration and code signing (plann
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?business=RXAPDEYENCPXS&no_recurring=1&item_name=Help+cover+costs+of+the+SWJM+blog+and+app+code+signing%2C+supporting+a+more+secure+future+for+all.&currency_code=USD)
 
 ## 📜 Release History
+* 2025.11.08 `v0.9.0`
 * 2025.03.19 `v0.8.0`
 * 2025.03.18 `v0.7.0`
 * 2025.03.18 `v0.6.0`
