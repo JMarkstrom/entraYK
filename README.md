@@ -73,23 +73,37 @@ Resulting Entra ID configuration:
 ---
 
 ### Register a YubiKey as device-bound passkey on behalf of a user or group
-This Cmdlet (`Register-YubiKey`) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN, name the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC. Programming output is presented on screen, as well as written to an output file (`output.csv`) in the user's working directory.
+This Cmdlet (`Register-YubiKey`) performs Enrollment On Behalf Of (EOBO) with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN (unless you specify one), name the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC. Programming output is presented on screen, as well as written to an output file (`output.csv`) in the user's working directory.
 
 You can register a YubiKey for a single user or for all members of a group. When using the `-Group` parameter, you will need a separate YubiKey for each group member.
+
 
 **Register a YubiKey on behalf of a single user:**
 ```powershell
 Register-YubiKey -User "alice@swjm.blog"
 ```
-
-**Register a YubiKey on behalf of a single user with an 6-character PIN:**
-```powershell
-Register-YubiKey -User "alice@swjm.blog" -PinLength 6
-```
+<u>Note:</u> This command will use a random 4 character PIN (default).
 
 **Register YubiKeys for all members of a group:**
 ```powershell
 Register-YubiKey -Group "Users"
+```
+<u>Note:</u> This command will use a random 4 character PIN (default).
+
+**Register a YubiKey on behalf of a single user with a 6-character random PIN:**
+```powershell
+Register-YubiKey -User "alice@swjm.blog" -PinLength 6
+```
+
+**Register a YubiKey on behalf of a single user with a fixed PIN:**
+```powershell
+Register-YubiKey -User "alice@swjm.blog" -Pin "1234"
+```
+
+
+**Register YubiKeys for all members of a group using a fixed PIN for all users:**
+```powershell
+Register-YubiKey -Group "Users" -Pin "1234"
 ```
 
 Sample output:   
@@ -97,7 +111,7 @@ Sample output:
 ```csv
 UPN,Model,Serial Number,PIN
 alice@swjm.blog,YubiKey 5C NFC,23616243,aX4k
-bob@swjm.blog,YubiKey 5C NFC,17735649,3nZeprese
+bob@swjm.blog,YubiKey 5C NFC,17735649,3nZe
 ```
 ![](/images/Register-YubiKey.png)
 
