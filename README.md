@@ -82,6 +82,11 @@ You can register a YubiKey for a single user or for all members of a group. When
 Register-YubiKey -User "alice@swjm.blog"
 ```
 
+**Register a YubiKey on behalf of a single user with an 6-character PIN:**
+```powershell
+Register-YubiKey -User "alice@swjm.blog" -PinLength 6
+```
+
 **Register YubiKeys for all members of a group:**
 ```powershell
 Register-YubiKey -Group "Users"
@@ -91,8 +96,8 @@ Sample output:
 
 ```csv
 UPN,Model,Serial Number,PIN
-alice@swjm.blog,YubiKey 5C NFC,23616243,5144
-bob@swjm.blog,YubiKey 5C NFC,17735649,4060
+alice@swjm.blog,YubiKey 5C NFC,23616243,aX4k
+bob@swjm.blog,YubiKey 5C NFC,17735649,3nZeprese
 ```
 ![](/images/Register-YubiKey.png)
 

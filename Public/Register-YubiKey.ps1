@@ -12,9 +12,16 @@ The User Principal Name (UPN) or Object ID of the target user in Entra ID.
 .PARAMETER Group
 The display name of a group in Entra ID. All members of this group will be registered with YubiKeys.
 
+.PARAMETER PinLength
+Length of the randomly generated FIDO2 PIN (4–63 characters). Uses letters and digits; weak patterns are rejected.
+
 .EXAMPLE
 Register-YubiKey -User bob@contoso.com
 Performs YubiKey configuration and registration of a passkey (FIDO2) credential for the specified user
+
+.EXAMPLE
+Register-YubiKey -User bob@contoso.com -PinLength 6
+Enrolls the user with an 6-character random FIDO2 PIN instead of the default length (4).
 
 .EXAMPLE
 Register-YubiKey -Group "Users"
@@ -103,6 +110,10 @@ function Register-SingleUserYubiKey {
         
         [Parameter(Mandatory=$true)]
         [string]$CSVFilePath,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateRange(4, 63)]
+        [int]$PinLength = 4,
         
         [Parameter(Mandatory=$false)]
         [switch]$SuppressDetailedOutput
@@ -121,18 +132,7 @@ function Register-SingleUserYubiKey {
     # Connect to YubiKey
     Connect-Yubikey
 
-    # Function to generate a random PIN (default length: 4)
-    function New-RandomPin {
-        param ([int]$Length = 4)
-        # Generate a random PIN
-        $pin = -join (
-            (48..57) | Get-Random -Count $Length | ForEach-Object { [char]$_ }
-        )
-        return $pin
-    }
-
-    # Call the function to generate the PIN
-    $pin = New-RandomPin 4 # TODO: Make this a parameter
+    $pin = New-Fido2RandomPin -PinLength $PinLength
 
     # Convert the PIN to a SecureString because powershellYK expects it!
     $securePin = ConvertTo-SecureString -String $pin -AsPlainText -Force
@@ -163,7 +163,7 @@ function Register-SingleUserYubiKey {
 
     # Try to set Minimum PIN Length (may not be supported on older firmware)
     try {
-        Set-YubiKeyFIDO2 -MinimumPINLength 4 # TODO: Make this a parameter
+        Set-YubiKeyFIDO2 -MinimumPINLength $PinLength
     } catch {
         Write-Debug "Attempted to set minimum PIN length, but it is unsupported by the YubiKey firmware (continuing)."
     }
@@ -299,7 +299,12 @@ function Register-YubiKey {
                   HelpMessage = "The display name of a group in Entra ID. All members will be enrolled with YubiKeys.")]
         [ValidateNotNullOrEmpty()]
         [string]
-        $Group
+        $Group,
+
+        [Parameter()]
+        [ValidateRange(4, 63)]
+        [int]
+        $PinLength = 4
     )
 
     begin {
@@ -422,7 +427,7 @@ function Register-YubiKey {
                 Write-Host ""
 
                 try {
-                    Register-SingleUserYubiKey -UserID $memberId -UserUPN $memberUpn -CSVFilePath $csvFilePath -SuppressDetailedOutput
+                    Register-SingleUserYubiKey -UserID $memberId -UserUPN $memberUpn -CSVFilePath $csvFilePath -PinLength $PinLength -SuppressDetailedOutput
                     $successCount++
                     Write-Host "✓ Successfully registered YubiKey for $memberUpn" -ForegroundColor Green
                 } catch {
@@ -467,7 +472,7 @@ function Register-YubiKey {
         $UserID = $User 
 
         # Single user registration - call the reusable function
-        Register-SingleUserYubiKey -UserID $UserID -UserUPN $UserID -CSVFilePath $csvFilePath
+        Register-SingleUserYubiKey -UserID $UserID -UserUPN $UserID -CSVFilePath $csvFilePath -PinLength $PinLength
 
         # Disconnect from Microsoft Graph
         try {
