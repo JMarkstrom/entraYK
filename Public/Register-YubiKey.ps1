@@ -123,9 +123,9 @@ function Register-SingleUserYubiKey {
         [Parameter(Mandatory=$true)]
         [string]$CSVFilePath,
 
-        [Parameter(Mandatory=$true, ParameterSetName = 'RandomPin')]
+        [Parameter(ParameterSetName = 'RandomPin')]
         [ValidateRange(4, 63)]
-        [int]$PinLength,
+        [int]$PinLength = 4,
 
         [Parameter(Mandatory=$true, ParameterSetName = 'FixedPin')]
         [ValidateLength(4, 63)]
@@ -134,10 +134,6 @@ function Register-SingleUserYubiKey {
         [Parameter(Mandatory=$false)]
         [switch]$SuppressDetailedOutput
     )
-
-    if ($PSCmdlet.ParameterSetName -eq 'RandomPin' -and -not $PSBoundParameters.ContainsKey('PinLength')) {
-        $PinLength = 4
-    }
 
     # Suppress informational messages
     $InformationPreference = 'SilentlyContinue'
@@ -197,12 +193,14 @@ function Register-SingleUserYubiKey {
     # Handle direct enrollment of YubiKey for a user
     Write-Debug -Message "Starting Passkey (FIDO2) credential creation in Entra ID"
     try {
+        $encodedUserId = [System.Uri]::EscapeDataString($UserID)
+
         # Add verbose output before the request
         Write-Verbose "Requesting Passkey (FIDO2) creation requirements for user: $UserID"
         
         # Modify the request to capture more error details
         $FIDO2Options = Invoke-MgGraphRequest -Method "GET" `
-            -Uri "/beta/users/$UserID/authentication/fido2Methods/creationOptions(challengeTimeoutInMinutes=5)" `
+            -Uri "/beta/users/$encodedUserId/authentication/fido2Methods/creationOptions(challengeTimeoutInMinutes=5)" `
             -ErrorAction Stop
     } catch {
         $statusCode = $_.Exception.Response.StatusCode
@@ -214,6 +212,12 @@ function Register-SingleUserYubiKey {
             2. You have sufficient access to the user's Administrative Unit (AU)
             3. Passkey (FIDO2) authentication is enabled in your Entra ID tenant
             
+            Full error: $($_.Exception.Message)"
+        } elseif ($statusCode -eq 'NotFound') {
+            throw "Failed to get Passkey (FIDO2) creation requirements: user not found or not accessible.
+            Verify the user exists and that you have access to the user (e.g., Administrative Unit scoping).
+            Tip: Try passing the user's Object ID (GUID) instead of UPN.
+
             Full error: $($_.Exception.Message)"
         } else {
             Write-Error "Failed to get Passkey (FIDO2) creation requirements" -ErrorAction Stop -Category InvalidOperation -ErrorId "FIDO2CreationFailed" -RecommendedAction "Please check your permissions and try again" -Message "Status: $statusCode. Error: $($_.Exception.Message)"
@@ -256,7 +260,7 @@ function Register-SingleUserYubiKey {
     
     # Make API call to register the Passkey (FIDO2) credential in Entra ID
     $result = Invoke-MgGraphRequest -Method "POST" `
-        -Uri "https://graph.microsoft.com/beta/users/$UserID/authentication/fido2Methods" `
+        -Uri "https://graph.microsoft.com/beta/users/$encodedUserId/authentication/fido2Methods" `
         -OutputType ([Microsoft.Graph.PowerShell.Authentication.Models.OutputType]::HttpResponseMessage) `
         -ContentType 'application/json' `
         -Body ($ReturnJSON | ConvertTo-JSON -Depth 4) `
@@ -333,11 +337,11 @@ function Register-YubiKey {
         [string]
         $Group,
 
-        [Parameter(Mandatory=$true, ParameterSetName = 'Enroll-on-behalf-of-user-random')]
-        [Parameter(Mandatory=$true, ParameterSetName = 'Enroll-for-group-random')]
+        [Parameter(ParameterSetName = 'Enroll-on-behalf-of-user-random')]
+        [Parameter(ParameterSetName = 'Enroll-for-group-random')]
         [ValidateRange(4, 63)]
         [int]
-        $PinLength,
+        $PinLength = 4,
 
         [Parameter(Mandatory=$true, ParameterSetName = 'Enroll-on-behalf-of-user-fixed')]
         [Parameter(Mandatory=$true, ParameterSetName = 'Enroll-for-group-fixed')]
@@ -347,10 +351,6 @@ function Register-YubiKey {
     )
 
     begin {
-        if ($PSCmdlet.ParameterSetName -like '*-random' -and -not $PSBoundParameters.ContainsKey('PinLength')) {
-            $PinLength = 4
-        }
-
         # Call the function to check and install the required module(s)
         Resolve-ModuleDependencies -ModuleName "Microsoft.Graph.Authentication"
         Resolve-ModuleDependencies -ModuleName "powershellYK"
@@ -436,7 +436,7 @@ function Register-YubiKey {
         }
 
         # Determine if we're processing a single user or a group
-        if ($PSCmdlet.ParameterSetName -eq 'Enroll-for-group') {
+        if ($PSCmdlet.ParameterSetName -like 'Enroll-for-group*') {
             # Handle group-based registration
             $groupMembers = Get-GroupMembers -GroupName $Group
             
