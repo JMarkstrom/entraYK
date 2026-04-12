@@ -1,6 +1,6 @@
     <#
     .SYNOPSIS
-    Generates a random FIDO2-compatible PIN (ASCII letters and digits).
+    Generates a random FIDO2-compatible PIN (ASCII letters and digits, or digits only with -Numeric).
 
     .DESCRIPTION
     Produces a PIN suitable for YubiKey FIDO2: NFC Form C normalized, UTF-8 length at most 63 bytes 
@@ -12,8 +12,11 @@
     .PARAMETER PinLength
     Number of characters. Must be between 4 and 63 inclusive.
 
+    .PARAMETER Numeric
+    If set, the PIN uses only ASCII digits (0-9). Still subject to weak-PIN rejection. Cannot be combined with -EnforceCharacterDiversity.
+
     .PARAMETER EnforceCharacterDiversity
-    Require at least one uppercase, one lowercase, and one digit.
+    Require at least one uppercase, one lowercase, and one digit. Cannot be used with -Numeric.
 
     .OUTPUTS
     System.String
@@ -39,8 +42,15 @@ function New-Fido2RandomPin {
         [int]$PinLength,
 
         [Parameter()]
+        [switch]$Numeric,
+
+        [Parameter()]
         [switch]$EnforceCharacterDiversity
     )
+
+    if ($Numeric -and $EnforceCharacterDiversity) {
+        throw "Cannot use -EnforceCharacterDiversity with -Numeric (digit-only PINs have no letter case)."
+    }
 
     # Initialize blocklist once per session (case-insensitive for alphabetic entries)
     if (-not $script:Fido2BlockedPins) {
@@ -54,8 +64,8 @@ function New-Fido2RandomPin {
         }
     }
 
-    # ASCII digits + uppercase + lowercase
-    $alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    # ASCII digits only, or digits + uppercase + lowercase
+    $alphabet = if ($Numeric) { '0123456789' } else { '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' }
     $alphabetLen = $alphabet.Length
 
     $attempt = 0
