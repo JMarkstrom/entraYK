@@ -7,18 +7,43 @@ This Cmdlet automates the enrollment of a YubiKey as device-bound passkey (FIDO2
 using PowerShellYK and Microsoft Graph API. It can register a YubiKey for a single user or for all members of a group.
 
 .PARAMETER User
-The User Principal Name (UPN) or Object ID of the target user in Entra ID.
+The User Principal Name (UPN) of the target user in Entra ID.
 
 .PARAMETER Group
 The display name of a group in Entra ID. All members of this group will be registered with YubiKeys.
+
+.PARAMETER Pin
+The PIN that will be assigned to all enrolled YubiKeys. If not specified, a random PIN will be generated. Mutually exclusive with -PinLength and -Alphanumeric (fixed-PIN parameter sets only).
+
+.PARAMETER PinLength
+Length of the randomly generated FIDO2 PIN (4–63 characters). Uses digits only by default; with -Alphanumeric, uses letters and digits. Weak patterns are rejected.
+
+.PARAMETER Alphanumeric
+When generating a random PIN, use letters and digits (a-z, A-Z, 0-9). Omit this switch for a numeric-only PIN (default).
 
 .EXAMPLE
 Register-YubiKey -User bob@contoso.com
 Performs YubiKey configuration and registration of a passkey (FIDO2) credential for the specified user
 
 .EXAMPLE
+Register-YubiKey -User bob@contoso.com -PinLength 6
+Enrolls the user with an 6-character random FIDO2 PIN instead of the default length (4).
+
+.EXAMPLE
+Register-YubiKey -User bob@contoso.com -Alphanumeric
+Enrolls the user with a random 4-character alphanumeric PIN instead of the default numeric PIN.
+
+.EXAMPLE
+Register-YubiKey -User bob@contoso.com -Pin "1234"
+Enrolls the user with a fixed initial PIN instead of a random PIN. Cannot be combined with -PinLength or -Alphanumeric.
+
+.EXAMPLE
 Register-YubiKey -Group "Users"
 Registers YubiKeys for all members of the specified group. You will be prompted to insert a new YubiKey for each user.
+
+.EXAMPLE
+Register-YubiKey -Group "Users" -Pin "1234"
+Registers YubiKeys for all members of the specified group using a fixed PIN. Cannot be combined with -PinLength or -Alphanumeric.
 
 .NOTES
 - Requires the powerShellYK module
@@ -26,6 +51,7 @@ Registers YubiKeys for all members of the specified group. You will be prompted 
 - Requires the Microsoft.Graph PowerShell module
 - Requires appropriate permissions in Entra ID (UserAuthenticationMethod.ReadWrite.All, GroupMember.Read.All)
 - When using -Group, you will need a separate YubiKey for each group member
+- User-selected trivial PINs (e.g. "111111") using the -Pin parameter may be rejected by YubiKey firmware.
 
 .LINK
 https://github.com/JMarkstrom/entraYK
@@ -51,7 +77,6 @@ function Get-GroupMembers {
 
         if (-not $groups.value -or $groups.value.Count -eq 0) {
             Write-Error "Group '$GroupName' not found in Entra ID." -ErrorAction Stop
-            return $null
         }
 
         if ($groups.value.Count -gt 1) {
@@ -87,13 +112,12 @@ function Get-GroupMembers {
 
     } catch {
         Write-Error "Failed to retrieve group members: $_" -ErrorAction Stop
-        return $null
     }
 }
 
 # Helper function to register a YubiKey for a single user
 function Register-SingleUserYubiKey {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'RandomPin')]
     param (
         [Parameter(Mandatory=$true)]
         [string]$UserID,
@@ -103,6 +127,17 @@ function Register-SingleUserYubiKey {
         
         [Parameter(Mandatory=$true)]
         [string]$CSVFilePath,
+
+        [Parameter(ParameterSetName = 'RandomPin')]
+        [ValidateRange(4, 63)]
+        [int]$PinLength = 4,
+
+        [Parameter(ParameterSetName = 'RandomPin')]
+        [switch]$Alphanumeric,
+
+        [Parameter(Mandatory=$true, ParameterSetName = 'FixedPin')]
+        [ValidateLength(4, 63)]
+        [string]$Pin,
         
         [Parameter(Mandatory=$false)]
         [switch]$SuppressDetailedOutput
@@ -118,52 +153,77 @@ function Register-SingleUserYubiKey {
     [System.Console]::ReadKey() > $null
     Clear-Host
 
-    # Connect to YubiKey
-    Connect-Yubikey
-
-    # Function to generate a random PIN (default length: 4)
-    function New-RandomPin {
-        param ([int]$Length = 4)
-        # Generate a random PIN
-        $pin = -join (
-            (48..57) | Get-Random -Count $Length | ForEach-Object { [char]$_ }
-        )
-        return $pin
-    }
-
-    # Call the function to generate the PIN
-    $pin = New-RandomPin 4 # TODO: Make this a parameter
-
-    # Convert the PIN to a SecureString because powershellYK expects it!
-    $securePin = ConvertTo-SecureString -String $pin -AsPlainText -Force
-
-    # Get general information about the YubiKey and store it in a variable
+    # Connect to YubiKey and get general information
     try {
+        Connect-Yubikey -ErrorAction Stop
         $yubiKeyInfo = Get-Yubikey
         $fidoInfo = Get-YubikeyFIDO2
     } catch {
         Write-Error "Failed to detect YubiKey" -ErrorAction Stop -Category DeviceError -RecommendedAction "Please ensure the YubiKey is properly connected and try again" -ErrorRecord $_
     }
 
-    # Naming convention for YubiKeys in Entra ID
-    $DisplayName = "YubiKey with S/N: $((Get-YubiKey).SerialNumber)"
+    # The effective PIN length to be set depends on whether the admin supplied a fixed PIN or we generate one.
+    if ($PSCmdlet.ParameterSetName -eq 'FixedPin') {
+        $requestedPinLength = $Pin.Length
+    } else {
+        $requestedPinLength = $PinLength
+    }
 
-    # Check if FIDO2 PIN is already set to determine if we should reset applet
+    # If a FIDO2 PIN is already set, reset before validating length: a prior run may have raised
+    # MinimumPinLength via Set-YubiKeyFIDO2; post-reset Get-YubikeyFIDO2 reflects the real constraint
+    # for the new PIN. Tradeoff: if validation still fails here, FIDO2 on this key is already cleared.
     if ($fidoInfo.Options['clientPin']) {
         try {
-            # Now reset FIDO2 applet if PIN is set...
             Reset-YubikeyFIDO2 -Confirm:$false # Skip the warning!
         } catch {
-            Write-Error "Failed to reset the FIDO2 applet: $_"
+            Write-Error "Failed to reset the FIDO2 applet: $_" -ErrorAction Stop
+        }
+        try {
+            $fidoInfo = Get-YubikeyFIDO2 -ErrorAction Stop
+        } catch {
+            Write-Error "Failed to read FIDO2 from YubiKey after reset" -ErrorAction Stop -Category DeviceError -RecommendedAction "Please ensure the YubiKey is properly connected and try again" -ErrorRecord $_
         }
     }
 
-    # Set the random PIN created earlier
-    Set-YubikeyFIDO2PIN -NewPIN $securePin
+    # Some YubiKeys like the 'Enterprise Edition', the 'EPIN', and the 'FIPS' series enforce a higher minimum than the FIDO2 baseline (4).
+    $deviceMinPinLength = $fidoInfo.MinimumPinLength
+    if (-not $deviceMinPinLength -or $deviceMinPinLength -lt 4) {
+        $deviceMinPinLength = 4
+    }
+
+    if ($requestedPinLength -lt $deviceMinPinLength) {
+        Write-Error -ErrorAction Stop -ErrorId "PIN_LENGTH_MISMATCH" -Category InvalidArgument `
+            -Message "PIN length mismatch for user '$UserUPN'. Requested length: $requestedPinLength. This YubiKey requires a minimum PIN length of $deviceMinPinLength. Insert another YubiKey or rerun with -PinLength $deviceMinPinLength (or higher), or provide -Pin with length >= $deviceMinPinLength."
+    }
+
+    if ($PSCmdlet.ParameterSetName -eq 'FixedPin') {
+        $pin = $Pin
+        $effectivePinLength = $Pin.Length
+    } else {
+        if ($Alphanumeric) {
+            $pin = New-Fido2RandomPin -PinLength $PinLength
+        } else {
+            $pin = New-Fido2RandomPin -PinLength $PinLength -Numeric
+        }
+        $effectivePinLength = $PinLength
+    }
+
+    # Convert the PIN to a SecureString because powershellYK expects it!
+    $securePin = ConvertTo-SecureString -String $pin -AsPlainText -Force
+
+    # Naming convention for YubiKeys in Entra ID
+    $DisplayName = "YubiKey with S/N: $((Get-YubiKey).SerialNumber)"
+
+    # Set the PIN (FIDO2 was reset above when a previous PIN was set)
+    try {
+        Set-YubikeyFIDO2PIN -NewPIN $securePin
+    } catch {
+        Write-Error "Failed to set FIDO2 PIN: $_" -ErrorAction Stop -Category DeviceError -RecommendedAction "Please ensure the YubiKey is properly connected and try again" -ErrorRecord $_
+    }
 
     # Try to set Minimum PIN Length (may not be supported on older firmware)
     try {
-        Set-YubiKeyFIDO2 -MinimumPINLength 4 # TODO: Make this a parameter
+        Set-YubiKeyFIDO2 -MinimumPINLength $effectivePinLength
     } catch {
         Write-Debug "Attempted to set minimum PIN length, but it is unsupported by the YubiKey firmware (continuing)."
     }
@@ -171,12 +231,14 @@ function Register-SingleUserYubiKey {
     # Handle direct enrollment of YubiKey for a user
     Write-Debug -Message "Starting Passkey (FIDO2) credential creation in Entra ID"
     try {
+        $encodedUserId = [System.Uri]::EscapeDataString($UserID)
+
         # Add verbose output before the request
         Write-Verbose "Requesting Passkey (FIDO2) creation requirements for user: $UserID"
         
         # Modify the request to capture more error details
         $FIDO2Options = Invoke-MgGraphRequest -Method "GET" `
-            -Uri "/beta/users/$UserID/authentication/fido2Methods/creationOptions(challengeTimeoutInMinutes=5)" `
+            -Uri "/beta/users/$encodedUserId/authentication/fido2Methods/creationOptions(challengeTimeoutInMinutes=5)" `
             -ErrorAction Stop
     } catch {
         $statusCode = $_.Exception.Response.StatusCode
@@ -188,6 +250,11 @@ function Register-SingleUserYubiKey {
             2. You have sufficient access to the user's Administrative Unit (AU)
             3. Passkey (FIDO2) authentication is enabled in your Entra ID tenant
             
+            Full error: $($_.Exception.Message)"
+        } elseif ($statusCode -eq 'NotFound') {
+            throw "Failed to get Passkey (FIDO2) creation requirements: user not found or not accessible.
+            Verify the user exists and that you have access to the user (e.g., Administrative Unit scoping).
+
             Full error: $($_.Exception.Message)"
         } else {
             Write-Error "Failed to get Passkey (FIDO2) creation requirements" -ErrorAction Stop -Category InvalidOperation -ErrorId "FIDO2CreationFailed" -RecommendedAction "Please check your permissions and try again" -Message "Status: $statusCode. Error: $($_.Exception.Message)"
@@ -201,7 +268,7 @@ function Register-SingleUserYubiKey {
     # Create user entity with proper Base64URL decoding of user ID
     $userEntity = [Yubico.YubiKey.Fido2.UserEntity]::new([System.Convert]::FromBase64String("$($FIDO2Options.publicKey.user.id -replace "-","+" -replace "_","/")"))
     $userEntity.Name = $FIDO2Options.publicKey.user.name
-    $userentity.DisplayName = $FIDO2Options.publicKey.user.displayName
+    $userEntity.DisplayName = $FIDO2Options.publicKey.user.displayName
     
     # Create Relying Party (RP) object with the RP ID
     $RelyingParty = [Yubico.YubiKey.Fido2.RelyingParty]::new($FIDO2Options.publicKey.rp.id)
@@ -230,7 +297,7 @@ function Register-SingleUserYubiKey {
     
     # Make API call to register the Passkey (FIDO2) credential in Entra ID
     $result = Invoke-MgGraphRequest -Method "POST" `
-        -Uri "https://graph.microsoft.com/beta/users/$UserID/authentication/fido2Methods" `
+        -Uri "https://graph.microsoft.com/beta/users/$encodedUserId/authentication/fido2Methods" `
         -OutputType ([Microsoft.Graph.PowerShell.Authentication.Models.OutputType]::HttpResponseMessage) `
         -ContentType 'application/json' `
         -Body ($ReturnJSON | ConvertTo-JSON -Depth 4) `
@@ -282,28 +349,50 @@ function Register-SingleUserYubiKey {
 
 # Function with parameters
 function Register-YubiKey {
-    [CmdletBinding(DefaultParameterSetName = 'Enroll-on-behalf-of-user')]
+    [CmdletBinding(DefaultParameterSetName = 'UserRandomPin')]
     param
     (
         [Parameter(Mandatory=$True,
-                  ParameterSetName = 'Enroll-on-behalf-of-user',
-                  HelpMessage = "The User Principal Name (UPN) or Object ID of the target user")]
+                  ParameterSetName = 'UserRandomPin',
+                  HelpMessage = "The User Principal Name (UPN) of the target user")]
+        [Parameter(Mandatory=$True,
+                  ParameterSetName = 'UserFixedPin',
+                  HelpMessage = "The User Principal Name (UPN) of the target user")]
         [ValidateNotNullOrEmpty()]
-        [ValidatePattern('^([^@]+@[^@]+\.[^@]+|[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12})$',
-            ErrorMessage = "UserID must be either a valid UPN (email format) or Object ID (GUID format)")]
+        [ValidatePattern('^[^@]+@[^@]+\.[^@]+$',
+            ErrorMessage = "User must be a valid UPN (e.g. user@contoso.com)")]
         [string]
         $User,
 
         [Parameter(Mandatory=$True,
-                  ParameterSetName = 'Enroll-for-group',
+                  ParameterSetName = 'GroupRandomPin',
+                  HelpMessage = "The display name of a group in Entra ID. All members will be enrolled with YubiKeys.")]
+        [Parameter(Mandatory=$True,
+                  ParameterSetName = 'GroupFixedPin',
                   HelpMessage = "The display name of a group in Entra ID. All members will be enrolled with YubiKeys.")]
         [ValidateNotNullOrEmpty()]
         [string]
-        $Group
+        $Group,
+
+        [Parameter(ParameterSetName = 'UserRandomPin')]
+        [Parameter(ParameterSetName = 'GroupRandomPin')]
+        [ValidateRange(4, 63)]
+        [int]
+        $PinLength = 4,
+
+        [Parameter(ParameterSetName = 'UserRandomPin')]
+        [Parameter(ParameterSetName = 'GroupRandomPin')]
+        [switch]
+        $Alphanumeric,
+
+        [Parameter(Mandatory=$true, ParameterSetName = 'UserFixedPin')]
+        [Parameter(Mandatory=$true, ParameterSetName = 'GroupFixedPin')]
+        [ValidateLength(4, 63)]
+        [string]
+        $Pin
     )
 
     begin {
-
         # Call the function to check and install the required module(s)
         Resolve-ModuleDependencies -ModuleName "Microsoft.Graph.Authentication"
         Resolve-ModuleDependencies -ModuleName "powershellYK"
@@ -389,7 +478,7 @@ function Register-YubiKey {
         }
 
         # Determine if we're processing a single user or a group
-        if ($PSCmdlet.ParameterSetName -eq 'Enroll-for-group') {
+        if ($PSCmdlet.ParameterSetName -like 'Group*') {
             # Handle group-based registration
             $groupMembers = Get-GroupMembers -GroupName $Group
             
@@ -421,13 +510,46 @@ function Register-YubiKey {
                 Write-Host "Processing user $counter of $($groupMembers.Count): $memberUpn" -ForegroundColor Cyan
                 Write-Host ""
 
-                try {
-                    Register-SingleUserYubiKey -UserID $memberId -UserUPN $memberUpn -CSVFilePath $csvFilePath -SuppressDetailedOutput
-                    $successCount++
-                    Write-Host "✓ Successfully registered YubiKey for $memberUpn" -ForegroundColor Green
-                } catch {
-                    $failCount++
-                    Write-Warning "Failed to register YubiKey for $memberUpn : $_"
+                # If the inserted YubiKey enforces a higher minimum PIN length, allow swapping keys for the same user.
+                $maxMismatchRetries = 3
+
+                for ($attempt = 1; $attempt -le $maxMismatchRetries; $attempt++) {
+                    try {
+                        if ($PSCmdlet.ParameterSetName -like '*FixedPin') {
+                            Register-SingleUserYubiKey -UserID $memberId -UserUPN $memberUpn -CSVFilePath $csvFilePath -Pin $Pin -SuppressDetailedOutput
+                        } else {
+                            Register-SingleUserYubiKey -UserID $memberId -UserUPN $memberUpn -CSVFilePath $csvFilePath -PinLength $PinLength -Alphanumeric:$Alphanumeric -SuppressDetailedOutput
+                        }
+                        $successCount++
+                        Write-Host "✓ Successfully registered YubiKey for $memberUpn" -ForegroundColor Green
+                        break
+                    } catch {
+                        $isPinLengthMismatch = ($_.FullyQualifiedErrorId -like 'PIN_LENGTH_MISMATCH*')
+                        $isYubiKeySelectionFailed = ($_.FullyQualifiedErrorId -like 'YUBIKEY_SELECTION_FAILED*')
+
+                        if ($isPinLengthMismatch -and $attempt -lt $maxMismatchRetries) {
+                            Write-Warning "YubiKey minimum PIN length mismatch for $memberUpn. Insert another YubiKey and retry (attempt $attempt of $maxMismatchRetries)."
+                            Write-Warning "Press any key to retry, or Ctrl+C to cancel."
+                            [System.Console]::ReadKey() > $null
+                            Clear-Host
+                            Write-Host "Retrying user $counter of $($groupMembers.Count): $memberUpn" -ForegroundColor Cyan
+                            Write-Host ""
+                            continue
+                        }
+                        if ($isYubiKeySelectionFailed -and $attempt -lt $maxMismatchRetries) {
+                            Write-Warning "Unable to select a single YubiKey (none/multiple connected) for $memberUpn. Insert exactly one YubiKey and retry (attempt $attempt of $maxMismatchRetries)."
+                            Write-Warning "Press any key to retry, or Ctrl+C to cancel."
+                            [System.Console]::ReadKey() > $null
+                            Clear-Host
+                            Write-Host "Retrying user $counter of $($groupMembers.Count): $memberUpn" -ForegroundColor Cyan
+                            Write-Host ""
+                            continue
+                        }
+
+                        $failCount++
+                        Write-Warning "Failed to register YubiKey for $memberUpn : $_"
+                        break
+                    }
                 }
 
                 # Prompt before next user (except for the last one)
@@ -450,29 +572,23 @@ function Register-YubiKey {
             Write-Host "📝 Information saved to: $csvFilePath" -ForegroundColor Yellow
             Write-Host ""
 
-            # Disconnect from Microsoft Graph
-            try {
-                Write-Debug "Disconnecting from Microsoft Graph..."
-                Disconnect-MgGraph | Out-Null  # Suppress output
-                Write-Debug "Disconnected from Microsoft Graph"
-            } catch {
-                Write-Warning "Failed to disconnect from Microsoft Graph: $_"
-            }
-
             return
         }
 
         # Single user registration (original flow)
         # Store UserID based on parameter input
-        $UserID = $User 
-
         # Single user registration - call the reusable function
-        Register-SingleUserYubiKey -UserID $UserID -UserUPN $UserID -CSVFilePath $csvFilePath
+        if ($PSCmdlet.ParameterSetName -like '*FixedPin') {
+            Register-SingleUserYubiKey -UserID $User -UserUPN $User -CSVFilePath $csvFilePath -Pin $Pin
+        } else {
+            Register-SingleUserYubiKey -UserID $User -UserUPN $User -CSVFilePath $csvFilePath -PinLength $PinLength -Alphanumeric:$Alphanumeric
+        }
+    }
 
-        # Disconnect from Microsoft Graph
+    end {
         try {
             Write-Debug "Disconnecting from Microsoft Graph..."
-            Disconnect-MgGraph | Out-Null  # Suppress output
+            Disconnect-MgGraph | Out-Null
             Write-Debug "Disconnected from Microsoft Graph"
         } catch {
             Write-Warning "Failed to disconnect from Microsoft Graph: $_"
