@@ -73,22 +73,22 @@ Resulting Entra ID configuration:
 ---
 
 ### Register a YubiKey as device-bound passkey on behalf of a user or group
-This Cmdlet (`Register-YubiKey`) performs Enrollment On Behalf Of (EOBO) AKA pre-registration with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN (unless you specify one)—by default letters and digits; use **`-Numeric`** for a digit-only random PIN. It names the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC. Programming output is presented on screen, as well as written to an output file (`output.csv`) in the user's working directory.
+This Cmdlet (`Register-YubiKey`) performs Enrollment On Behalf Of (EOBO) AKA pre-registration with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN (unless you specify one)—by default digits only (0-9); use **`-Alphanumeric`** for letters and digits. It names the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC. Programming output is presented on screen, as well as written to an output file (`output.csv`) in the user's working directory. The **`-User`** parameter accepts a User Principal Name (UPN) only, not an Entra object ID.
 
 💡 When using the `-Group` parameter, you will need a separate YubiKey for each group member.
 
 
 **Register a YubiKey on behalf of a single user:**   
-This command (and the equivialent group command) will use a random `4` character alphanumeric PIN (default).
+This command (and the equivalent group command) will use a random `4`-character numeric PIN by default.
 
 ```powershell
 Register-YubiKey -User "alice@swjm.blog"
 ```
 
-**Register with a random digit-only PIN** (same default length `4`, or combine with `-PinLength`):
+**Register with a random alphanumeric PIN** (same default length `4`, or combine with `-PinLength`):
 
 ```powershell
-Register-YubiKey -User "alice@swjm.blog" -Numeric
+Register-YubiKey -User "alice@swjm.blog" -Alphanumeric
 ```
 
 **Register YubiKeys for all members of a group:**
@@ -97,7 +97,7 @@ Register-YubiKey -Group "Users"
 ```
 
 **Register a YubiKey on behalf of a single user with a 6-character random PIN:**   
-This command (and the equivialent group command) sets the minimum PIN length to match the selected length.
+This command (and the equivalent group command) sets the minimum PIN length to match the selected length. Unless you pass **`-Alphanumeric`**, the PIN uses digits only.
 
 ```powershell
 Register-YubiKey -User "alice@swjm.blog" -PinLength 6
@@ -117,8 +117,8 @@ Sample output:
 
 ```csv
 UPN,Model,Serial Number,PIN
-alice@swjm.blog,YubiKey 5C NFC,23616243,aX4k
-bob@swjm.blog,YubiKey 5C NFC,17735649,3nZe
+alice@swjm.blog,YubiKey 5C NFC,23616243,7391
+bob@swjm.blog,YubiKey 5C NFC,17735649,2846
 ```
 ![](/images/Register-YubiKey.png)
 

@@ -7,19 +7,19 @@ This Cmdlet automates the enrollment of a YubiKey as device-bound passkey (FIDO2
 using PowerShellYK and Microsoft Graph API. It can register a YubiKey for a single user or for all members of a group.
 
 .PARAMETER User
-The User Principal Name (UPN) or Object ID of the target user in Entra ID.
+The User Principal Name (UPN) of the target user in Entra ID.
 
 .PARAMETER Group
 The display name of a group in Entra ID. All members of this group will be registered with YubiKeys.
 
 .PARAMETER Pin
-The PIN that will be assigned to all enrolled YubiKeys. If not specified, a random PIN will be generated. Mutually exclusive with -PinLength and -Numeric (fixed-PIN parameter sets only).
+The PIN that will be assigned to all enrolled YubiKeys. If not specified, a random PIN will be generated. Mutually exclusive with -PinLength and -Alphanumeric (fixed-PIN parameter sets only).
 
 .PARAMETER PinLength
-Length of the randomly generated FIDO2 PIN (4–63 characters). With the default charset, uses letters and digits; with -Numeric, uses digits only. Weak patterns are rejected.
+Length of the randomly generated FIDO2 PIN (4–63 characters). Uses digits only by default; with -Alphanumeric, uses letters and digits. Weak patterns are rejected.
 
-.PARAMETER Numeric
-When generating a random PIN, use digits only (0-9). Omit this switch for an alphanumeric PIN (default).
+.PARAMETER Alphanumeric
+When generating a random PIN, use letters and digits (a-z, A-Z, 0-9). Omit this switch for a numeric-only PIN (default).
 
 .EXAMPLE
 Register-YubiKey -User bob@contoso.com
@@ -30,12 +30,12 @@ Register-YubiKey -User bob@contoso.com -PinLength 6
 Enrolls the user with an 6-character random FIDO2 PIN instead of the default length (4).
 
 .EXAMPLE
-Register-YubiKey -User bob@contoso.com -Numeric
-Enrolls the user with a random 4-character numeric PIN instead of the default alphanumeric PIN.
+Register-YubiKey -User bob@contoso.com -Alphanumeric
+Enrolls the user with a random 4-character alphanumeric PIN instead of the default numeric PIN.
 
 .EXAMPLE
 Register-YubiKey -User bob@contoso.com -Pin "1234"
-Enrolls the user with a fixed initial PIN instead of a random PIN. Cannot be combined with -PinLength or -Numeric.
+Enrolls the user with a fixed initial PIN instead of a random PIN. Cannot be combined with -PinLength or -Alphanumeric.
 
 .EXAMPLE
 Register-YubiKey -Group "Users"
@@ -43,7 +43,7 @@ Registers YubiKeys for all members of the specified group. You will be prompted 
 
 .EXAMPLE
 Register-YubiKey -Group "Users" -Pin "1234"
-Registers YubiKeys for all members of the specified group using a fixed PIN. Cannot be combined with -PinLength or -Numeric.
+Registers YubiKeys for all members of the specified group using a fixed PIN. Cannot be combined with -PinLength or -Alphanumeric.
 
 .NOTES
 - Requires the powerShellYK module
@@ -133,7 +133,7 @@ function Register-SingleUserYubiKey {
         [int]$PinLength = 4,
 
         [Parameter(ParameterSetName = 'RandomPin')]
-        [switch]$Numeric,
+        [switch]$Alphanumeric,
 
         [Parameter(Mandatory=$true, ParameterSetName = 'FixedPin')]
         [ValidateLength(4, 63)]
@@ -200,10 +200,10 @@ function Register-SingleUserYubiKey {
         $pin = $Pin
         $effectivePinLength = $Pin.Length
     } else {
-        if ($Numeric) {
-            $pin = New-Fido2RandomPin -PinLength $PinLength -Numeric
-        } else {
+        if ($Alphanumeric) {
             $pin = New-Fido2RandomPin -PinLength $PinLength
+        } else {
+            $pin = New-Fido2RandomPin -PinLength $PinLength -Numeric
         }
         $effectivePinLength = $PinLength
     }
@@ -254,7 +254,6 @@ function Register-SingleUserYubiKey {
         } elseif ($statusCode -eq 'NotFound') {
             throw "Failed to get Passkey (FIDO2) creation requirements: user not found or not accessible.
             Verify the user exists and that you have access to the user (e.g., Administrative Unit scoping).
-            Tip: Try passing the user's Object ID (GUID) instead of UPN.
 
             Full error: $($_.Exception.Message)"
         } else {
@@ -350,44 +349,44 @@ function Register-SingleUserYubiKey {
 
 # Function with parameters
 function Register-YubiKey {
-    [CmdletBinding(DefaultParameterSetName = 'Enroll-on-behalf-of-user-random')]
+    [CmdletBinding(DefaultParameterSetName = 'UserRandomPin')]
     param
     (
         [Parameter(Mandatory=$True,
-                  ParameterSetName = 'Enroll-on-behalf-of-user-random',
-                  HelpMessage = "The User Principal Name (UPN) or Object ID of the target user")]
+                  ParameterSetName = 'UserRandomPin',
+                  HelpMessage = "The User Principal Name (UPN) of the target user")]
         [Parameter(Mandatory=$True,
-                  ParameterSetName = 'Enroll-on-behalf-of-user-fixed',
-                  HelpMessage = "The User Principal Name (UPN) or Object ID of the target user")]
+                  ParameterSetName = 'UserFixedPin',
+                  HelpMessage = "The User Principal Name (UPN) of the target user")]
         [ValidateNotNullOrEmpty()]
-        [ValidatePattern('^([^@]+@[^@]+\.[^@]+|[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12})$',
-            ErrorMessage = "UserID must be either a valid UPN (email format) or Object ID (GUID format)")]
+        [ValidatePattern('^[^@]+@[^@]+\.[^@]+$',
+            ErrorMessage = "User must be a valid UPN (e.g. user@contoso.com)")]
         [string]
         $User,
 
         [Parameter(Mandatory=$True,
-                  ParameterSetName = 'Enroll-for-group-random',
+                  ParameterSetName = 'GroupRandomPin',
                   HelpMessage = "The display name of a group in Entra ID. All members will be enrolled with YubiKeys.")]
         [Parameter(Mandatory=$True,
-                  ParameterSetName = 'Enroll-for-group-fixed',
+                  ParameterSetName = 'GroupFixedPin',
                   HelpMessage = "The display name of a group in Entra ID. All members will be enrolled with YubiKeys.")]
         [ValidateNotNullOrEmpty()]
         [string]
         $Group,
 
-        [Parameter(ParameterSetName = 'Enroll-on-behalf-of-user-random')]
-        [Parameter(ParameterSetName = 'Enroll-for-group-random')]
+        [Parameter(ParameterSetName = 'UserRandomPin')]
+        [Parameter(ParameterSetName = 'GroupRandomPin')]
         [ValidateRange(4, 63)]
         [int]
         $PinLength = 4,
 
-        [Parameter(ParameterSetName = 'Enroll-on-behalf-of-user-random')]
-        [Parameter(ParameterSetName = 'Enroll-for-group-random')]
+        [Parameter(ParameterSetName = 'UserRandomPin')]
+        [Parameter(ParameterSetName = 'GroupRandomPin')]
         [switch]
-        $Numeric,
+        $Alphanumeric,
 
-        [Parameter(Mandatory=$true, ParameterSetName = 'Enroll-on-behalf-of-user-fixed')]
-        [Parameter(Mandatory=$true, ParameterSetName = 'Enroll-for-group-fixed')]
+        [Parameter(Mandatory=$true, ParameterSetName = 'UserFixedPin')]
+        [Parameter(Mandatory=$true, ParameterSetName = 'GroupFixedPin')]
         [ValidateLength(4, 63)]
         [string]
         $Pin
@@ -479,7 +478,7 @@ function Register-YubiKey {
         }
 
         # Determine if we're processing a single user or a group
-        if ($PSCmdlet.ParameterSetName -like 'Enroll-for-group*') {
+        if ($PSCmdlet.ParameterSetName -like 'Group*') {
             # Handle group-based registration
             $groupMembers = Get-GroupMembers -GroupName $Group
             
@@ -516,10 +515,10 @@ function Register-YubiKey {
 
                 for ($attempt = 1; $attempt -le $maxMismatchRetries; $attempt++) {
                     try {
-                        if ($PSCmdlet.ParameterSetName -like '*-fixed') {
+                        if ($PSCmdlet.ParameterSetName -like '*FixedPin') {
                             Register-SingleUserYubiKey -UserID $memberId -UserUPN $memberUpn -CSVFilePath $csvFilePath -Pin $Pin -SuppressDetailedOutput
                         } else {
-                            Register-SingleUserYubiKey -UserID $memberId -UserUPN $memberUpn -CSVFilePath $csvFilePath -PinLength $PinLength -Numeric:$Numeric -SuppressDetailedOutput
+                            Register-SingleUserYubiKey -UserID $memberId -UserUPN $memberUpn -CSVFilePath $csvFilePath -PinLength $PinLength -Alphanumeric:$Alphanumeric -SuppressDetailedOutput
                         }
                         $successCount++
                         Write-Host "✓ Successfully registered YubiKey for $memberUpn" -ForegroundColor Green
@@ -578,13 +577,11 @@ function Register-YubiKey {
 
         # Single user registration (original flow)
         # Store UserID based on parameter input
-        $UserID = $User 
-
         # Single user registration - call the reusable function
-        if ($PSCmdlet.ParameterSetName -like '*-fixed') {
-            Register-SingleUserYubiKey -UserID $UserID -UserUPN $UserID -CSVFilePath $csvFilePath -Pin $Pin
+        if ($PSCmdlet.ParameterSetName -like '*FixedPin') {
+            Register-SingleUserYubiKey -UserID $User -UserUPN $User -CSVFilePath $csvFilePath -Pin $Pin
         } else {
-            Register-SingleUserYubiKey -UserID $UserID -UserUPN $UserID -CSVFilePath $csvFilePath -PinLength $PinLength -Numeric:$Numeric
+            Register-SingleUserYubiKey -UserID $User -UserUPN $User -CSVFilePath $csvFilePath -PinLength $PinLength -Alphanumeric:$Alphanumeric
         }
     }
 
