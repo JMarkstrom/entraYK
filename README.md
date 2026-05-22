@@ -13,7 +13,7 @@ Functionality includes the ability to:
 The PowerShell module provided herein is made available on an "as-is" basis, without any warranties or representations, whether express, implied, or statutory, including but not limited to implied warranties of merchantability, fitness for a particular purpose, or non-infringement.
 
 ## 💻 Prerequisites
-_Use of the powershellYK module requires the following prerequisites be met:_
+_Use of the entraYK module requires the following prerequisites be met:_
 - PowerShell 7 (```pwsh```)
 
 ## 💾 Installation
