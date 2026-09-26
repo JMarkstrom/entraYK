@@ -164,7 +164,6 @@ Possible improvements includes:
 - Create Kerberos object (pending Microsoft PS Core support)
 - Ability to fetch last used authenticator by UPN
 
-
 ### 🥷🏻 Contributing
 You can help by getting involved in the project, _or_ by donating (any amount!).   
 Donations will support costs such as domain registration and code signing (planned).
@@ -182,3 +181,9 @@ Donations will support costs such as domain registration and code signing (plann
 * 2025.02.01 `v0.3.0`
 * 2025.01.28 `v0.2.0`
 * 2025.01.26 `v0.1.0`
+
+## ™️ Trademark notice
+YubiKey is a trademark of Yubico. This project is independent of and is not affiliated with, endorsed by, or sponsored by Yubico.
+
+## ⚖️ License
+This software is proprietary. Copyright (c) 2026 swjm.blog. All rights reserved. See [LICENSE](LICENSE) for details.
