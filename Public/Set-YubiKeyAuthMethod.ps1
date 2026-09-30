@@ -4,8 +4,10 @@ Configures and enables the 'Passkey (FIDO2)' authentication method in Microsoft 
 
 .DESCRIPTION
 This Cmdlet configures and enables the 'Passkey (FIDO2)' method in Microsoft Entra ID for YubiKey support.
-It enforces attestation with authenticator restrictions set to either whitelist all FIDO2 passkey-capable YubiKey  
-models or select YubiKey models by their AAGUID(s). Non-YubiKey models (AAGUIDs) will be rejected.
+It updates the tenant's Default passkey profile in place: device-bound passkeys only, attestation enforced
+at registration, and an allow list of either all FIDO2 passkey-capable YubiKey models or select models by
+their AAGUID(s). Self-service registration is enabled. Non-YubiKey models (AAGUIDs) will be rejected.
+The tenant must already have opted in to passkey profiles.
 
 .PARAMETER AAGUID
 Specify one or more AAGUIDs to include in the authentication method.
@@ -15,15 +17,15 @@ Use all supported YubiKey AAGUIDs
 
 .EXAMPLE
 Set-YubiKeyAuthMethod -All
-Configures and enables the 'Passkey (FIDO2)' using all FIDO2 passkey-capable YubiKey models
+Updates the Default passkey profile to allow all FIDO2 passkey-capable YubiKey models
 
 .EXAMPLE
 Set-YubiKeyAuthMethod -AAGUID "fa2b99dc-9e39-4257-8f92-4a30d23c4118"
-Configures and enables the 'Passkey (FIDO2)' using using only select YubiKey model(s) by their AAGUID(s).
+Updates the Default passkey profile to allow only select YubiKey model(s) by their AAGUID(s).
 
 .EXAMPLE
 Set-YubiKeyAuthMethod -AAGUID "fa2b99dc-9e39-4257-8f92-4a30d23c4118", "2fc0579f-8113-47ea-b116-bb5a8db9202a"
-Configures and enables the 'Passkey (FIDO2)' using using select YubiKey model(s) by their AAGUID(s).
+Updates the Default passkey profile to allow select YubiKey model(s) by their AAGUID(s).
 
 .NOTES
 - Ensure that you are connected to the Microsoft Graph API with the appropriate permissions
@@ -70,7 +72,7 @@ function Set-YubiKeyAuthMethod {
 
         # Validate AAGUIDs first before connecting to Graph
         $selectedAAGUIDs = if ($All) { 
-            $YubiKeyInfo | Select-Object -ExpandProperty AAGUID
+            $YubiKeyInfo | Select-Object -ExpandProperty AAGUID -Unique
         } else { 
             $validAAGUIDs = @()
             foreach ($guid in $AAGUID) {
@@ -152,7 +154,14 @@ function Set-YubiKeyAuthMethod {
         
         # Warn the user on pending configuration:
         Clear-Host
-        Write-Warning "This will enable the Passkey (FIDO2) authentication method with YubiKey(s):`n"
+        Write-Warning @"
+This will update the Default passkey profile for all users assigned to it:
+- Allow only device-bound passkeys
+- Enforce attestation at registration
+- Restrict AAGUIDs to the selected YubiKeys
+- Turn on self-service registration
+
+"@
 
         $proceed = $false
         do {
@@ -175,42 +184,123 @@ function Set-YubiKeyAuthMethod {
         } while (-not $proceed)
 
 
-        # Get the FIDO2 authentication method configuration
-        $Uri = "https://graph.microsoft.com/beta/authenticationMethodsPolicy/authenticationMethodConfigurations/FIDO2"
-        $Body = @{
-            "@odata.type"          = "#microsoft.graph.fido2AuthenticationMethodConfiguration"
-            "isAttestationEnforced" = $true
-            "keyRestrictions"       = @{
-                "isEnforced"      = $true
-                "enforcementType" = "allow"
-                "aaGuids"         = @($selectedAAGUIDs)  # Wrap in @() to ensure array format
-            }
-            "includeTargets@odata.context" = "https://graph.microsoft.com/beta/$metadata#authenticationMethodsPolicy/authenticationMethodConfigurations('Fido2')/microsoft.graph.fido2AuthenticationMethodConfiguration/includeTargets"
-            "includeTargets" = @(
-                @{
-                    "targetType"            = "group"
-                    "id"                    = "all_users"
-                    "isRegistrationRequired" = $false
-                    "allowedPasskeyProfiles" = @()
-                }
-            )
-            "passkeyProfiles" = @()
-        } | ConvertTo-Json -Depth 3 -Compress
+        $Uri = "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/fido2"
 
         try {
-            Invoke-MgGraphRequest -Method PATCH -Uri $Uri -Body $Body -ContentType "application/json" | Out-Null
+            $policy = Invoke-MgGraphRequest -Method GET -Uri $Uri -ErrorAction Stop
+
+            $defaultProfileId = [string]$policy.defaultPasskeyProfile
+            $existingProfiles = @($policy.passkeyProfiles | Where-Object { $_ })
+            $defaultProfile = $existingProfiles | Where-Object { [string]$_.id -eq $defaultProfileId } | Select-Object -First 1
+
+            if ([string]::IsNullOrWhiteSpace($defaultProfileId) -or -not $defaultProfile) {
+                throw "Passkey profiles are not enabled. Opt in to passkey profiles in the Microsoft Entra admin center, then run this command again."
+            }
+
+            $passkeyProfiles = @()
+            foreach ($profile in $existingProfiles) {
+                $profileId = [string]$profile.id
+                if ($profileId -eq $defaultProfileId) {
+                    $passkeyProfiles += @{
+                        id                     = $profileId
+                        name                   = [string]$profile.name
+                        passkeyTypes           = "deviceBound"
+                        attestationEnforcement = "registrationOnly"
+                        keyRestrictions        = @{
+                            isEnforced      = $true
+                            enforcementType = "allow"
+                            aaGuids         = @($selectedAAGUIDs)
+                        }
+                    }
+                } else {
+                    $restrictions = $profile.keyRestrictions
+                    $otherAaGuids = @()
+                    $isEnforced = $false
+                    $enforcementType = "allow"
+                    if ($restrictions) {
+                        $isEnforced = [bool]$restrictions.isEnforced
+                        if ($restrictions.enforcementType) {
+                            $enforcementType = [string]$restrictions.enforcementType
+                        }
+                        if ($restrictions.aaGuids) {
+                            $otherAaGuids = @($restrictions.aaGuids | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+                        }
+                    }
+                    $passkeyProfiles += @{
+                        id                     = $profileId
+                        name                   = [string]$profile.name
+                        passkeyTypes           = $profile.passkeyTypes
+                        attestationEnforcement = $profile.attestationEnforcement
+                        keyRestrictions        = @{
+                            isEnforced      = $isEnforced
+                            enforcementType = $enforcementType
+                            aaGuids         = $otherAaGuids
+                        }
+                    }
+                }
+            }
+
+            $includeTargets = @()
+            $foundAllUsers = $false
+            foreach ($target in @($policy.includeTargets | Where-Object { $_ })) {
+                if ([string]$target.id -eq "all_users") {
+                    $foundAllUsers = $true
+                    $includeTargets += @{
+                        targetType             = "group"
+                        id                     = "all_users"
+                        isRegistrationRequired = [bool]$target.isRegistrationRequired
+                        allowedPasskeyProfiles = @($defaultProfileId)
+                    }
+                } else {
+                    $assignedProfiles = @()
+                    if ($target.allowedPasskeyProfiles) {
+                        $assignedProfiles = @($target.allowedPasskeyProfiles | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+                    }
+                    $includeTargets += @{
+                        targetType             = if ($target.targetType) { [string]$target.targetType } else { "group" }
+                        id                     = [string]$target.id
+                        isRegistrationRequired = [bool]$target.isRegistrationRequired
+                        allowedPasskeyProfiles = $assignedProfiles
+                    }
+                }
+            }
+
+            if (-not $foundAllUsers) {
+                $includeTargets += @{
+                    targetType             = "group"
+                    id                     = "all_users"
+                    isRegistrationRequired = $false
+                    allowedPasskeyProfiles = @($defaultProfileId)
+                }
+            }
+
+            $Body = @{
+                "@odata.type"                    = "#microsoft.graph.fido2AuthenticationMethodConfiguration"
+                state                             = "enabled"
+                isSelfServiceRegistrationAllowed  = $true
+                isAttestationEnforced             = $true
+                includeTargets                    = @($includeTargets)
+                passkeyProfiles                   = @($passkeyProfiles)
+            } | ConvertTo-Json -Depth 6 -Compress
+
+            Invoke-MgGraphRequest -Method PATCH -Uri $Uri -Body $Body -ContentType "application/json" -ErrorAction Stop | Out-Null
 
             # Clear screen and display summary
             Clear-Host
             Write-Host "*************************************************************************" -ForegroundColor Yellow
             Write-Host "YUBIKEY AUTHENTICATION METHOD CONFIGURATION COMPLETED SUCCESSFULLY!" -ForegroundColor Yellow
             Write-Host "*************************************************************************" -ForegroundColor Yellow
-            Write-Host "Successfully configured Passkey (FIDO2) method with YubiKeys in Entra ID." -ForegroundColor Green
+            Write-Host "Successfully updated the Default passkey profile with YubiKeys in Entra ID." -ForegroundColor Green
             Write-Host ""
 
         } catch {
             Clear-Host
+            $errorText = $_.ErrorDetails.Message
+            if ([string]::IsNullOrWhiteSpace($errorText)) {
+                $errorText = $_.Exception.Message
+            }
             Write-Host "Failed to configure authentication method!" -ForegroundColor Red
+            Write-Host $errorText -ForegroundColor Red
         }
 
         # Disconnect from Microsoft Graph

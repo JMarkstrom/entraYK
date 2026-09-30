@@ -145,8 +145,8 @@ function Set-YubiKeyAuthStrength {
         $selectedAAGUIDs = if ($All) { 
             Write-Debug "Using all supported YubiKeys with firmware version 5.7 or higher"
             $YubiKeyInfo | Where-Object { 
-                [version]($_.Firmware.Split(' / ')[0]) -ge [version]'5.7'
-            } | Select-Object -ExpandProperty AAGUID
+                [version]$_.Firmware -ge [version]'5.7'
+            } | Select-Object -ExpandProperty AAGUID -Unique
         } else { 
             Write-Debug "Using specified AAGUID(s): $($AAGUID -join ', ')"
             $validAAGUIDs = @()

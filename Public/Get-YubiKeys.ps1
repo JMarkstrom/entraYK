@@ -198,10 +198,10 @@ function Get-YubiKeys {
                             $hasFido2 = $true
                             $aaguid = $method.AdditionalProperties['aaGuid']
                             $nickname = $method.AdditionalProperties['displayName']
-                            # Get only the first matching firmware for this AAGUID
-                            $info = $YubiKeyInfo | Where-Object { $_.'AAGUID' -eq $aaguid } | Select-Object -First 1
-                            $firmware = $info.Firmware
-                            $certification = $info.Certification
+                            # One AAGUID can cover several firmware versions and models
+                            $matches = @($YubiKeyInfo | Where-Object { $_.AAGUID -eq $aaguid })
+                            $firmware = ($matches | Select-Object -ExpandProperty Firmware -Unique) -join ' or '
+                            $certification = $matches | Select-Object -First 1 -ExpandProperty Certification
 
                             $report += [pscustomobject]@{
                                 UPN      = $currentUser.UserPrincipalName
