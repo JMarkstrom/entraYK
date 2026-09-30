@@ -4,10 +4,11 @@
 **entraYK** is a PowerShell module for managing YubiKeys as device-bound passkeys (FIDO2) in Microsoft Entra ID.   
 Functionality includes the ability to: 
 
+- [Register a YubiKey as device-bound passkey on behalf of a user or group](#register-a-yubikey-as-device-bound-passkey-on-behalf-of-a-user-or-group)
+- [List YubiKey attributes for all or select user(s)](#list-yubikey-attributes-for-all-or-select-users)
 - [Configure the default Passkey profile for YubiKey use](#configure-the-default-passkey-profile-for-yubikey-use)    
 - [Create a custom authentication strength definition](#create-a-custom-authentication-strength-definition)  
-- [Register a YubiKey as device-bound passkey on behalf of a user or group](#register-a-yubikey-as-device-bound-passkey-on-behalf-of-a-user-or-group)  
-- [List YubiKey attributes for all or select user(s)](#list-yubikey-attributes-for-all-or-select-users)   
+
 
 ## ⚠️ Disclaimer
 The PowerShell module provided herein is made available on an "as-is" basis, without any warranties or representations, whether express, implied, or statutory, including but not limited to implied warranties of merchantability, fitness for a particular purpose, or non-infringement.
@@ -25,52 +26,6 @@ _To install entraYK:_
 4. Execute command: ```Import-Module entraYK```
 
 ## 📖 Usage
-
-### Configure the default Passkey profile for YubiKey use
-This Cmdlet (`Set-YubiKeyAuthMethod`) updates the Default passkey profile for the "Passkey (FIDO2)" authentication method in Microsoft Entra ID. It enables the method and self-service registration, allows only device-bound passkeys, enforces attestation at registration, and allow-lists YubiKeys for all users assigned that profile. The Cmdlet can whitelist either all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. The Cmdlet will reject non Yubico AAGUIDs. The tenant must already have opted in to passkey profiles.
-
-   
-**Enable the Passkey method defining all YubiKey models:**
-```powershell
-Set-YubiKeyAuthMethod -All
-```
-**Enable the Passkey method defining a specific YubiKey model by AAGUID:**
-```powershell
-Set-YubiKeyAuthMethod -AAGUID "fa2b99dc-9e39-4257-8f92-4a30d23c4118"
-```
-Resulting Entra ID configuration:   
-
-![](/images/Set-YubiKeyAuthMethod.png)
-
-**NOTE**: You can find YubiKey AAGUIDs [here](https://jmarkstrom.github.io/aaguids/)
-
----
-
-### Create a custom authentication strength definition
-This Cmdlet (`Set-YubiKeyAuthStrength`) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either add all YubiKeys (with firmware `5.7` or greater) or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys. An optional user-selected name can be provided using the `-Name` parameter.
-
-   
-**Add a custom authentication strength using _all_ YubiKey models with firmware 5.7+:**
-```powershell
-Set-YubiKeyAuthStrength -All
-```
-**Add a custom authentication strength using only _select_ YubiKey model(s) by their AAGUID(s):**
-```powershell
-Set-YubiKeyAuthStrength -AAGUID "fa2b99dc-9e39-4257-8f92-4a30d23c4118"
-```
-**Add a custom authentication strength with your name of choice**
-```powershell
-Set-YubiKeyAuthStrength -All -Name "AAL3"
-```
-
-Resulting Entra ID configuration:   
-
-![](/images/Set-YubiKeyAuthStrength.png)
-
-**NOTE**: You can find YubiKey AAGUIDs [here](https://jmarkstrom.github.io/aaguids/)
-
-
----
 
 ### Register a YubiKey as device-bound passkey on behalf of a user or group
 This Cmdlet (`Register-YubiKey`) performs Enrollment On Behalf Of (EOBO) AKA pre-registration with Microsoft Entra ID. The Cmdlet uses **powershellYK** for YubiKey configuration and credential creation. It will generate a random PIN (unless you specify one)—by default digits only (0-9); use **`-Alphanumeric`** for letters and digits. It names the YubiKey to contain Serial Number for asset tracking purposes, and where supported it will set the ForceChangePin flag and enable Restricted NFC. Programming output is presented on screen, as well as written to an output file (`output.csv`) in the user's working directory. The **`-User`** parameter accepts a User Principal Name (UPN) only, not an Entra object ID.
@@ -156,13 +111,56 @@ Because AAGUIDs does not necessarily change with firmware version it is possible
 
 ---
 
+### Configure the default Passkey profile for YubiKey use
+This Cmdlet (`Set-YubiKeyAuthMethod`) updates the Default passkey profile for the "Passkey (FIDO2)" authentication method in Microsoft Entra ID. It enables the method and self-service registration, allows only device-bound passkeys, enforces attestation at registration, and allow-lists YubiKeys for all users assigned that profile. The Cmdlet can whitelist either all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. The Cmdlet will reject non Yubico AAGUIDs. The tenant must already have opted in to passkey profiles.
+
+   
+**Enable the Passkey method defining all YubiKey models:**
+```powershell
+Set-YubiKeyAuthMethod -All
+```
+**Enable the Passkey method defining a specific YubiKey model by AAGUID:**
+```powershell
+Set-YubiKeyAuthMethod -AAGUID "fa2b99dc-9e39-4257-8f92-4a30d23c4118"
+```
+Resulting Entra ID configuration:   
+
+![](/images/Set-YubiKeyAuthMethod.png)
+
+**NOTE**: You can find YubiKey AAGUIDs [here](https://jmarkstrom.github.io/aaguids/)
+
+---
+
+### Create a custom authentication strength definition
+This Cmdlet (`Set-YubiKeyAuthStrength`) adds a custom authentication strength to Microsoft Entra ID. The Cmdlet can either add all YubiKeys (with firmware `5.7` or greater) or select YubiKey models as defined by their AAGUID. In addition to any defined YubiKey the Cmdlet will also add support for Temporary Access Pass (TAP) as a single use authenticator. The method created will be named "YubiKey" and can be selected in Conditional Access policies to require phishing-resistant MFA using YubiKeys as device-bound passkeys. An optional user-selected name can be provided using the `-Name` parameter.
+
+   
+**Add a custom authentication strength using _all_ YubiKey models with firmware 5.7+:**
+```powershell
+Set-YubiKeyAuthStrength -All
+```
+**Add a custom authentication strength using only _select_ YubiKey model(s) by their AAGUID(s):**
+```powershell
+Set-YubiKeyAuthStrength -AAGUID "fa2b99dc-9e39-4257-8f92-4a30d23c4118"
+```
+**Add a custom authentication strength with your name of choice**
+```powershell
+Set-YubiKeyAuthStrength -All -Name "AAL3"
+```
+
+Resulting Entra ID configuration:   
+
+![](/images/Set-YubiKeyAuthStrength.png)
+
+**NOTE**: You can find YubiKey AAGUIDs [here](https://jmarkstrom.github.io/aaguids/)
+
+
+---
+
 ## 📖 Roadmap
 Possible improvements includes:
 - ~~Passkey "EOBO" enrollment using [powershellYK](https://github.com/virot/powershellYK)~~
 - ~~Add ```-Name``` param for ```Set-YubiKeyAuthStrength```~~
-- Create a Conditional Access Policy
-- Create Kerberos object (pending Microsoft PS Core support)
-- Ability to fetch last used authenticator by UPN
 
 ### 🥷🏻 Contributing
 You can help by getting involved in the project, _or_ by donating (any amount!).   
