@@ -4,7 +4,7 @@
 **entraYK** is a PowerShell module for managing YubiKeys as device-bound passkeys (FIDO2) in Microsoft Entra ID.   
 Functionality includes the ability to: 
 
-- [Configure the "Passkey (FIDO2)" authentication method](#configure-the-passkey-fido2-authentication-method)    
+- [Configure the default Passkey profile for YubiKey use](#configure-the-default-passkey-profile-for-yubikey-use)    
 - [Create a custom authentication strength definition](#create-a-custom-authentication-strength-definition)  
 - [Register a YubiKey as device-bound passkey on behalf of a user or group](#register-a-yubikey-as-device-bound-passkey-on-behalf-of-a-user-or-group)  
 - [List YubiKey attributes for all or select user(s)](#list-yubikey-attributes-for-all-or-select-users)   
