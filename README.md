@@ -26,7 +26,7 @@ _To install entraYK:_
 
 ## 📖 Usage
 
-### Configure the "Passkey (FIDO2)" authentication method
+### Configure the default Passkey profile for YubiKey use
 This Cmdlet (`Set-YubiKeyAuthMethod`) updates the Default passkey profile for the "Passkey (FIDO2)" authentication method in Microsoft Entra ID. It enables the method and self-service registration, allows only device-bound passkeys, enforces attestation at registration, and allow-lists YubiKeys for all users assigned that profile. The Cmdlet can whitelist either all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. The Cmdlet will reject non Yubico AAGUIDs. The tenant must already have opted in to passkey profiles.
 
    
