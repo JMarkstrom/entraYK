@@ -27,7 +27,7 @@ _To install entraYK:_
 ## 📖 Usage
 
 ### Configure the "Passkey (FIDO2)" authentication method
-This Cmdlet (`Set-YubiKeyAuthMethod`) configures the "Passkey (FIDO2)" authentication method in Microsoft Entra ID. Importantly it configures the method for all users and it enforces FIDO device attestation with white-listing of YubiKeys. The Cmdlet can whitelist either all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. The Cmdlet will reject non Yubico AAGUIDs.
+This Cmdlet (`Set-YubiKeyAuthMethod`) updates the Default passkey profile for the "Passkey (FIDO2)" authentication method in Microsoft Entra ID. It enables the method and self-service registration, allows only device-bound passkeys, enforces attestation at registration, and allow-lists YubiKeys for all users assigned that profile. The Cmdlet can whitelist either all(!) FIDO2-capable YubiKeys or select YubiKey models as defined by their AAGUID. The Cmdlet will reject non Yubico AAGUIDs. The tenant must already have opted in to passkey profiles.
 
    
 **Enable the Passkey method defining all YubiKey models:**
@@ -149,10 +149,10 @@ UPN                Nickname        Firmware      Certfication
 -------------------------------------------------------------
 alice@swjm.blog    YubiKey 5 Nano  5.7           L2
 bob@swjm.blog      YubiKey 5 NFC   5.7           L2
-mike@swjm.blog     YubiKey 5C NFC  5.2 / 5.4     L1
+mike@swjm.blog     YubiKey 5C NFC  5.2 or 5.4    L1
 ```
 **NOTE**: The logic to present firmware version is dependent on Entra ID storing YubiKey AAGUID.
-Because AAGUIDs does not necessarily change with firmware version it is possible that a YubiKey is _either_ one firmware or another as shown above (```5.2 / 5.4```).
+Because AAGUIDs does not necessarily change with firmware version it is possible that a YubiKey is _either_ one firmware or another as shown above (```5.2 or 5.4```).
 
 ---
 
@@ -172,6 +172,7 @@ Donations will support costs such as domain registration and code signing (plann
 [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?business=RXAPDEYENCPXS&no_recurring=1&item_name=Help+cover+costs+of+the+SWJM+blog+and+app+code+signing%2C+supporting+a+more+secure+future+for+all.&currency_code=USD)
 
 ## 📜 Release History
+* 2026.09.30 `v1.0.1`
 * 2026.04.12 `v1.0.0`
 * 2025.11.08 `v0.9.0`
 * 2025.03.19 `v0.8.0`
