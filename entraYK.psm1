@@ -1,4 +1,4 @@
-#requires -Version 7.0
+#requires -Version 7.6
 
 # Get public and private function definition files
 $Public = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue )

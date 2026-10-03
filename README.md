@@ -15,7 +15,7 @@ This application is provided on an “AS IS” basis, without warranties or repr
 
 ## 💻 Prerequisites
 _Use of the entraYK module requires the following prerequisites be met:_
-- PowerShell 7 (```pwsh```)
+- PowerShell 7.6 or later (```pwsh```); required by powershellYK
 
 ## 💾 Installation
 _To install entraYK:_

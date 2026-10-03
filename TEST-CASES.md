@@ -203,7 +203,7 @@ SAS-08
 ## Cross-cutting (all Graph cmdlets)
 
 X-01
-  Scenario: Import module on PowerShell 7+
+  Scenario: Import module on PowerShell 7.6+
   Expected: No parse errors; functions exported per manifest
 
 X-02

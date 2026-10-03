@@ -3,7 +3,7 @@
     RootModule = 'entraYK.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.0.1'
+    ModuleVersion = '1.0.2'
 
     # ID used to uniquely identify this module
     GUID = '8f742c2f-7a76-4c6a-9c69-b2f2e14c3d9b'
@@ -15,13 +15,13 @@
     CompanyName = 'swjm.blog'
 
     # Copyright statement for this module
-    Copyright = '(c) 2025 SWJM All rights reserved.'
+    Copyright = '(c) 2026 SWJM All rights reserved.'
 
     # Description of the functionality provided by this module
     Description = 'PowerShell module for managing YubiKeys as device-bound passkeys (FIDO2) in Microsoft Entra ID'
 
     # Minimum version of the PowerShell engine required by this module
-    PowerShellVersion = '7.0'
+    PowerShellVersion = '7.6'
 
     # Modules that must be imported into the global environment prior to importing this module
     #RequiredModules = @('Microsoft.Graph')
