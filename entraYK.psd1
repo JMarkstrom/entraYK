@@ -3,7 +3,7 @@
     RootModule = 'entraYK.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.0.2'
+    ModuleVersion = '1.0.3'
 
     # ID used to uniquely identify this module
     GUID = '8f742c2f-7a76-4c6a-9c69-b2f2e14c3d9b'
