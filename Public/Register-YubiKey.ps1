@@ -440,56 +440,38 @@ function Register-YubiKey {
         # Check if already connected with correct permissions (needed for both user and group operations)
         $context = Get-MgContext
         $needsAuth = $false
-        $needsBrowserAuth = $false
 
         if ($null -eq $context) {
             $needsAuth = $true
-            $needsBrowserAuth = $true
         } else {
-            # Check if all required scopes are present (case-insensitive comparison)
-            $missingScopes = $requiredScopes | Where-Object { $context.Scopes -notcontains $_ }
+            $missingScopes = @($requiredScopes | Where-Object { $context.Scopes -notcontains $_ })
             if ($missingScopes.Count -gt 0) {
                 $needsAuth = $true
                 Write-Host "Missing required scopes: $($missingScopes -join ', ')" -ForegroundColor Yellow
             }
         }
 
-        # Handle authentication
+        # Connect once when authentication is needed (session-only; avoids persistent token cache / Keychain prompts)
         if ($needsAuth) {
-            # Show prompt before any authentication attempts
             Clear-Host
             Write-Host "NOTE: Authenticate in the browser to obtain the required permissions (press any key to continue)" -ForegroundColor Yellow
             [System.Console]::ReadKey() > $null
             Clear-Host
 
-            Write-Debug "Attempting to refresh existing token"
             try {
-                # First try silent token refresh
-                Connect-MgGraph -Scopes $requiredScopes -NoWelcome -ErrorAction Stop
-                
-                # Verify connection was successful
-                $context = Get-MgContext
-                if ($null -eq $context) {
-                    $needsBrowserAuth = $true
-                }
+                Connect-MgGraph -Scopes $requiredScopes -ContextScope Process -NoWelcome -ErrorAction Stop
             } catch {
-                Write-Debug "Silent token refresh failed, will attempt browser authentication"
-                $needsBrowserAuth = $true
+                Write-Error "Failed to authenticate to Microsoft Graph: $_" -ErrorAction Stop
             }
 
-            if ($needsBrowserAuth) {
-                try {
-                    Connect-MgGraph -Scopes $requiredScopes -NoWelcome # -UseDeviceAuthentication
-                    
-                    # Verify final connection status
-                    $context = Get-MgContext
-                    if ($null -eq $context) {
-                        throw "Authentication failed! Please ensure you approve all requested permissions."
-                    }
-                } catch {
-                    Write-Error "Failed to authenticate: $_"
-                    throw
-                }
+            $context = Get-MgContext
+            if ($null -eq $context) {
+                Write-Error "Authentication failed! No Microsoft Graph context is available. Please ensure you approve all requested permissions." -ErrorAction Stop
+            }
+
+            $missingScopes = @($requiredScopes | Where-Object { $context.Scopes -notcontains $_ })
+            if ($missingScopes.Count -gt 0) {
+                Write-Error "Authentication succeeded but required scopes are still missing: $($missingScopes -join ', '). Please re-authenticate and approve all requested permissions." -ErrorAction Stop
             }
         } else {
             Write-Debug "Already authenticated with the required permissions."
