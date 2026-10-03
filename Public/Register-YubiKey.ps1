@@ -231,33 +231,50 @@ function Register-SingleUserYubiKey {
     # Handle direct enrollment of YubiKey for a user
     Write-Debug -Message "Starting Passkey (FIDO2) credential creation in Entra ID"
     try {
-        $encodedUserId = [System.Uri]::EscapeDataString($UserID)
+        # Resolve UPN to object ID first. Single-user mode passes a UPN; EscapeDataString +
+        # Invoke-MgGraphRequest can 404 creationOptions. Group enrollment already uses object IDs.
+        $resolvedObjectId = $null
+        if ($UserID -match '^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$') {
+            $resolvedObjectId = $UserID
+        } else {
+            try {
+                $resolvedUser = Invoke-MgGraphRequest -Method "GET" -Uri "/v1.0/users/$UserID" -ErrorAction Stop
+                $resolvedObjectId = [string]$resolvedUser.id
+            } catch {
+                $escapedUpn = [uri]::EscapeDataString($UserID)
+                $resolvedUser = Invoke-MgGraphRequest -Method "GET" -Uri "/v1.0/users/$escapedUpn" -ErrorAction Stop
+                $resolvedObjectId = [string]$resolvedUser.id
+            }
+        }
+        if ([string]::IsNullOrWhiteSpace($resolvedObjectId)) {
+            throw "Unable to resolve user '$UserID' to an Entra object ID."
+        }
 
-        # Add verbose output before the request
-        Write-Verbose "Requesting Passkey (FIDO2) creation requirements for user: $UserID"
-        
-        # Modify the request to capture more error details
+        $encodedUserId = $resolvedObjectId
+        Write-Verbose "Requesting Passkey (FIDO2) creation requirements for user: $UserID ($resolvedObjectId)"
+
         $FIDO2Options = Invoke-MgGraphRequest -Method "GET" `
-            -Uri "/beta/users/$encodedUserId/authentication/fido2Methods/creationOptions(challengeTimeoutInMinutes=5)" `
+            -Uri "/beta/users/$resolvedObjectId/authentication/fido2Methods/creationOptions(challengeTimeoutInMinutes=5)" `
             -ErrorAction Stop
     } catch {
-        $statusCode = $_.Exception.Response.StatusCode
-        
-        # Check specific error conditions
-        if ($statusCode -eq 'BadRequest') {
+        $errorMessage = "$($_.Exception.Message)"
+        $statusCode = $null
+        try { $statusCode = $_.Exception.Response.StatusCode } catch { $statusCode = $null }
+
+        if ("$statusCode" -eq 'BadRequest') {
             throw "Failed to get Passkey (FIDO2) creation requirements. Please verify:
             1. You have sufficient permissions (UserAuthenticationMethod.ReadWrite.All, GroupMember.Read.All)
             2. You have sufficient access to the user's Administrative Unit (AU)
             3. Passkey (FIDO2) authentication is enabled in your Entra ID tenant
             
-            Full error: $($_.Exception.Message)"
-        } elseif ($statusCode -eq 'NotFound') {
+            Full error: $errorMessage"
+        } elseif ("$statusCode" -eq 'NotFound') {
             throw "Failed to get Passkey (FIDO2) creation requirements: user not found or not accessible.
             Verify the user exists and that you have access to the user (e.g., Administrative Unit scoping).
 
-            Full error: $($_.Exception.Message)"
+            Full error: $errorMessage"
         } else {
-            Write-Error "Failed to get Passkey (FIDO2) creation requirements" -ErrorAction Stop -Category InvalidOperation -ErrorId "FIDO2CreationFailed" -RecommendedAction "Please check your permissions and try again" -Message "Status: $statusCode. Error: $($_.Exception.Message)"
+            Write-Error "Failed to get Passkey (FIDO2) creation requirements" -ErrorAction Stop -Category InvalidOperation -ErrorId "FIDO2CreationFailed" -RecommendedAction "Please check your permissions and try again" -Message "Status: $statusCode. Error: $errorMessage"
         }
     }
 
@@ -278,7 +295,8 @@ function Register-SingleUserYubiKey {
     
     # Prompt the user to touch the YubiKey during the key generation process
     Clear-Host
-    [console]::beep(300, 500); Write-Host "[!] Please touch the YubiKey to perform key generation..."
+    Write-YubiKeyAlert
+    Write-Host "[!] Please touch the YubiKey to perform key generation..."
 
     # Create new Passkey (FIDO2) credential on YubiKey
     $FIDO2Response = New-YubiKeyFIDO2Credential -RelyingParty $RelyingParty -Discoverable $true -Challenge $challenge -UserEntity $userEntity -RequestedAlgorithms $Algorithms
@@ -588,7 +606,14 @@ function Register-YubiKey {
     end {
         try {
             Write-Debug "Disconnecting from Microsoft Graph..."
-            Disconnect-MgGraph | Out-Null
+            # Graph SDK may emit an MSAL cache-clear warning that ignores -WarningAction.
+            $previousWarningPreference = $WarningPreference
+            $WarningPreference = 'SilentlyContinue'
+            try {
+                Disconnect-MgGraph -ErrorAction SilentlyContinue 3>$null | Out-Null
+            } finally {
+                $WarningPreference = $previousWarningPreference
+            }
             Write-Debug "Disconnected from Microsoft Graph"
         } catch {
             Write-Warning "Failed to disconnect from Microsoft Graph: $_"
